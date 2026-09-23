@@ -23,10 +23,10 @@ export const StatCard: React.FC<StatCardProps> = ({
   onPress,
   style,
 }) => {
-  const content = (
-    <View style={[styles.card, style]}>
+  const cardContent = (
+    <View style={[styles.card, !onPress && style]}>
       <View style={styles.headerRow}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
           {title}
         </Text>
         {icon ? (
@@ -36,59 +36,67 @@ export const StatCard: React.FC<StatCardProps> = ({
         ) : null}
       </View>
       <Text style={styles.value}>{value}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      {subtitle ? (
+        <Text style={styles.subtitle} numberOfLines={1} ellipsizeMode="tail">
+          {subtitle}
+        </Text>
+      ) : null}
     </View>
   );
 
   if (onPress) {
     return (
-      <TouchableOpacity activeOpacity={0.75} onPress={onPress}>
-        {content}
+      <TouchableOpacity activeOpacity={0.75} onPress={onPress} style={style}>
+        {cardContent}
       </TouchableOpacity>
     );
   }
 
-  return content;
+  return cardContent;
 };
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
-    padding: SPACING.base,
+    padding: SPACING.md,
     borderWidth: 1,
     borderColor: COLORS.gray[200],
     ...SHADOWS.sm,
   },
   headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    minHeight: 32,
     marginBottom: SPACING.xs,
   },
   title: {
-    fontSize: TYPOGRAPHY.sizes.xs,
+    flex: 1,
+    marginRight: 6,
+    fontSize: 11,
+    lineHeight: 14,
     color: COLORS.gray[500],
-    fontWeight: TYPOGRAPHY.weights.medium,
+    fontWeight: TYPOGRAPHY.weights.semibold,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   iconWrapper: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
     borderRadius: RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   value: {
-    fontSize: TYPOGRAPHY.sizes['2xl'],
+    fontSize: TYPOGRAPHY.sizes.xl,
     fontWeight: TYPOGRAPHY.weights.bold,
     color: COLORS.gray[900],
     marginTop: 2,
   },
   subtitle: {
-    fontSize: TYPOGRAPHY.sizes.xs,
+    fontSize: 11,
     color: COLORS.gray[500],
-    marginTop: 4,
+    marginTop: 2,
   },
 });

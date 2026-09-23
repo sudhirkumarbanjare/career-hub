@@ -101,7 +101,7 @@ class ClientServiceManager {
       title: 'Job Approved by Admin',
       body: 'Your job posting "Mobile App Developer (React Native)" has been approved and is now visible to students.',
       read: true,
-      createdAt: '2026-02-01T11:00:00.000Z',
+      createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
     },
     {
       id: 'notif-c2',
@@ -109,7 +109,24 @@ class ClientServiceManager {
       title: 'New Student Application',
       body: 'Sneha Verma submitted an application for "Mobile App Developer".',
       read: false,
-      createdAt: '2026-02-06T11:00:00.000Z',
+      createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+      deepLink: 'tech2place://client/applications',
+    },
+    {
+      id: 'notif-c3',
+      userId: 'usr_client_demo',
+      title: 'Employer Profile Verified',
+      body: 'Your company KYC and corporate tax details have been verified by the Admin team.',
+      read: false,
+      createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+    },
+    {
+      id: 'notif-c4',
+      userId: 'usr_client_demo',
+      title: 'Interview Reminder',
+      body: 'Technical interview scheduled with Candidate Sneha Verma for tomorrow at 2:00 PM IST.',
+      read: false,
+      createdAt: new Date(Date.now() - 3600000 * 10).toISOString(),
     },
   ];
 
@@ -231,9 +248,27 @@ class ClientServiceManager {
     return this.notifications;
   }
 
+  getUnreadNotificationsCount(): number {
+    return this.notifications.filter((n) => !n.read).length;
+  }
+
   markNotificationRead(id: string) {
     const n = this.notifications.find((item) => item.id === id);
     if (n) n.read = true;
+  }
+
+  markAllNotificationsAsRead() {
+    this.notifications.forEach((n) => {
+      n.read = true;
+    });
+  }
+
+  deleteNotification(id: string) {
+    this.notifications = this.notifications.filter((n) => n.id !== id);
+  }
+
+  clearAllNotifications() {
+    this.notifications = [];
   }
 }
 

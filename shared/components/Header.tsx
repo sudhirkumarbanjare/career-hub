@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
 import { COLORS } from '../theme/colors';
 import { SPACING, RADIUS } from '../theme/spacing';
 import { TYPOGRAPHY } from '../theme/typography';
@@ -8,21 +8,25 @@ export interface HeaderProps {
   title: string;
   subtitle?: string;
   onBack?: () => void;
+  showBack?: boolean;
   rightAction?: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   title,
   subtitle,
   onBack,
+  showBack,
   rightAction,
   style,
 }) => {
+  const shouldShowBack = showBack ?? !!onBack;
+
   return (
     <View style={[styles.container, style]}>
       <View style={styles.leftContainer}>
-        {onBack ? (
+        {shouldShowBack ? (
           <TouchableOpacity
             onPress={onBack}
             activeOpacity={0.7}

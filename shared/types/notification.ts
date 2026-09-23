@@ -7,6 +7,7 @@ export type NotificationTarget =
   | 'student_app' 
   | 'client_app' 
   | 'admin_app' 
+  | 'all_apps'
   | 'individual' 
   | 'custom';
 

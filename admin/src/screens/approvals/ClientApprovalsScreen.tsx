@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   rejectReasonBox: {
     backgroundColor: '#fff5f5',
     borderLeftWidth: 3,
-    borderLeftColor: COLORS.danger,
+    borderLeftColor: COLORS.danger[600],
     padding: SPACING.sm,
     borderRadius: 4,
     marginBottom: SPACING.sm,
@@ -424,11 +424,11 @@ const styles = StyleSheet.create({
   rejectReasonTitle: {
     ...TYPOGRAPHY.caption,
     fontWeight: '700',
-    color: COLORS.danger,
+    color: COLORS.danger[600],
   },
   rejectReasonText: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.danger,
+    color: COLORS.danger[600],
     marginTop: 2,
   },
   actionsRow: {

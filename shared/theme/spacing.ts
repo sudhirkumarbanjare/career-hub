@@ -6,6 +6,7 @@ export const SPACING = {
   lg: 20,
   xl: 24,
   '2xl': 32,
+  xxl: 32,
   '3xl': 40,
   '4xl': 48,
 };
@@ -18,6 +19,7 @@ export const RADIUS = {
   xl: 16,
   '2xl': 24,
   pill: 9999,
+  full: 9999,
 };
 
 export const SHADOWS = {

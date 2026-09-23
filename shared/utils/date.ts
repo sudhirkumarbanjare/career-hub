@@ -44,3 +44,5 @@ export function formatRelativeTime(input: string | number | Date): string {
     return String(input);
   }
 }
+
+export const formatRelativeDate = formatRelativeTime;

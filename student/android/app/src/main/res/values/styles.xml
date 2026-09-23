@@ -1,0 +1,5 @@
+<resources>
+    <!-- Base application theme (no rn_edit_text_material reference - provided by react-android AAR) -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+    </style>
+</resources>

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
+  TouchableOpacity,
 } from 'react-native';
 import {
   COLORS,
@@ -23,11 +24,16 @@ import { ClientService } from '../../services/clientService';
 
 export interface ClientProfileScreenProps {
   onLogout: () => void;
+  onNavigateToNotifications?: () => void;
 }
 
-export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({ onLogout }) => {
+export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({
+  onLogout,
+  onNavigateToNotifications,
+}) => {
   const [client, setClient] = useState(ClientService.getCurrentClient());
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const unreadCount = ClientService.getUnreadNotificationsCount();
 
   const [editCompany, setEditCompany] = useState(client.companyName);
   const [editContact, setEditContact] = useState(client.contactPerson);
@@ -56,7 +62,7 @@ export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({ onLogo
       case 'rejected':
         return { label: 'REVISION REQUIRED ⚠️', variant: 'danger' };
       default:
-        return { label: client.approvalStatus.toUpperCase(), variant: 'gray' };
+        return { label: String((client as any).approvalStatus || 'STATUS').toUpperCase(), variant: 'gray' };
     }
   };
 
@@ -67,12 +73,30 @@ export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({ onLogo
       <Header
         title="Employer Profile"
         rightAction={
-          <Button
-            title="Edit ✎"
-            onPress={() => setIsEditOpen(true)}
-            variant="ghost"
-            size="sm"
-          />
+          <View style={styles.headerRightRow}>
+            {onNavigateToNotifications ? (
+              <TouchableOpacity
+                onPress={onNavigateToNotifications}
+                style={styles.notifBtn}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.notifBellIcon}>🔔</Text>
+                {unreadCount > 0 ? (
+                  <View style={styles.notifBadge}>
+                    <Text style={styles.notifBadgeText}>
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </Text>
+                  </View>
+                ) : null}
+              </TouchableOpacity>
+            ) : null}
+            <Button
+              title="Edit ✎"
+              onPress={() => setIsEditOpen(true)}
+              variant="ghost"
+              size="sm"
+            />
+          </View>
         }
       />
 
@@ -88,6 +112,37 @@ export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({ onLogo
           </View>
           <Text style={styles.descText}>{client.description}</Text>
         </Card>
+
+        {/* Notifications & Updates Quick Access Card */}
+        {onNavigateToNotifications ? (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={onNavigateToNotifications}
+            style={styles.notifCardTouch}
+          >
+            <Card style={styles.notifMenuCard}>
+              <View style={styles.notifCardLeft}>
+                <View style={styles.notifIconCircle}>
+                  <Text style={{ fontSize: 18 }}>🔔</Text>
+                </View>
+                <View style={{ marginLeft: SPACING.sm, flex: 1 }}>
+                  <Text style={styles.notifCardTitle}>Employer Notifications & Alerts</Text>
+                  <Text style={styles.notifCardSub}>
+                    {unreadCount > 0
+                      ? `${unreadCount} unread candidate / approval alert${unreadCount > 1 ? 's' : ''}`
+                      : 'All caught up with employer updates'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.notifCardRight}>
+                {unreadCount > 0 ? (
+                  <Badge label={`${unreadCount} New`} variant="danger" size="sm" />
+                ) : null}
+                <Text style={styles.chevron}>→</Text>
+              </View>
+            </Card>
+          </TouchableOpacity>
+        ) : null}
 
         <Card style={styles.infoCard}>
           <Text style={styles.cardHeading}>Account & Organization Info</Text>
@@ -262,5 +317,89 @@ const styles = StyleSheet.create({
     color: COLORS.gray[900],
     backgroundColor: COLORS.surface,
     marginBottom: SPACING.md,
+  },
+  headerRightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  notifBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.gray[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    marginRight: 4,
+  },
+  notifBellIcon: {
+    fontSize: 18,
+  },
+  notifBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.danger[500] || '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: COLORS.surface,
+  },
+  notifBadgeText: {
+    color: COLORS.white,
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  notifCardTouch: {
+    marginBottom: SPACING.base,
+  },
+  notifMenuCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: '#99f6e4',
+  },
+  notifCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  notifIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0fdfa',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notifCardTitle: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.gray[900],
+  },
+  notifCardSub: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    color: COLORS.gray[500],
+    marginTop: 2,
+  },
+  notifCardRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  chevron: {
+    fontSize: 18,
+    color: COLORS.gray[400],
+    marginLeft: 4,
   },
 });

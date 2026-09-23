@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   Switch,
   TextInput,
+  TouchableOpacity,
   Alert,
 } from 'react-native';
 import {
@@ -22,15 +23,20 @@ import { AdminService } from '../../services/adminService';
 
 interface AdminSettingsScreenProps {
   onBack?: () => void;
+  onLogout?: () => void;
+  onNavigateToNotifications?: () => void;
 }
 
 export const AdminSettingsScreen: React.FC<AdminSettingsScreenProps> = ({
   onBack,
+  onLogout,
+  onNavigateToNotifications,
 }) => {
   const [settings, setSettings] = useState<SystemSettings>(AdminService.getSettings());
   const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>(
     AdminService.getFeatureFlags()
   );
+  const unreadCount = AdminService.getUnreadAdminNotificationsCount();
 
   // Form states
   const [supportEmail, setSupportEmail] = useState(settings.supportEmail);
@@ -68,9 +74,60 @@ export const AdminSettingsScreen: React.FC<AdminSettingsScreenProps> = ({
         subtitle="Global governance, feature flags & policies"
         showBack={!!onBack}
         onBack={onBack}
+        rightAction={
+          onNavigateToNotifications ? (
+            <TouchableOpacity
+              onPress={onNavigateToNotifications}
+              style={styles.notifBtn}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.notifBellIcon}>🔔</Text>
+              {unreadCount > 0 ? (
+                <View style={styles.notifBadge}>
+                  <Text style={styles.notifBadgeText}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Text>
+                </View>
+              ) : null}
+            </TouchableOpacity>
+          ) : null
+        }
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Admin Alerts & System Notifications Quick Access Card */}
+        {onNavigateToNotifications ? (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={onNavigateToNotifications}
+            style={styles.notifCardTouch}
+          >
+            <Card style={styles.notifMenuCard}>
+              <View style={styles.notifCardLeft}>
+                <View style={styles.notifIconCircle}>
+                  <Text style={{ fontSize: 18 }}>🛡️</Text>
+                </View>
+                <View style={{ marginLeft: SPACING.sm, flex: 1 }}>
+                  <Text style={styles.notifCardTitle}>System Alerts & Notifications</Text>
+                  <Text style={styles.notifCardSub}>
+                    {unreadCount > 0
+                      ? `${unreadCount} unread administrative alert${unreadCount > 1 ? 's' : ''}`
+                      : 'All system alerts and approvals reviewed'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.notifCardRight}>
+                {unreadCount > 0 ? (
+                  <View style={styles.newBadge}>
+                    <Text style={styles.newBadgeText}>{unreadCount} New</Text>
+                  </View>
+                ) : null}
+                <Text style={styles.chevron}>→</Text>
+              </View>
+            </Card>
+          </TouchableOpacity>
+        ) : null}
+
         {/* Registration & Approval Policies */}
         <Card style={styles.card}>
           <Text style={styles.sectionTitle}>Registration & Governance Rules</Text>
@@ -182,6 +239,21 @@ export const AdminSettingsScreen: React.FC<AdminSettingsScreenProps> = ({
             />
           </View>
         </Card>
+
+        {onLogout && (
+          <Card style={[styles.card, { borderColor: '#fecaca', borderWidth: 1 }]}>
+            <Text style={[styles.sectionTitle, { color: COLORS.danger[600] }]}>Session Governance</Text>
+            <Text style={styles.sectionSub}>Terminate active session and log out of administrative console.</Text>
+            <Button
+              title="Sign Out from Admin Console"
+              variant="outline"
+              size="medium"
+              onPress={onLogout}
+              style={{ borderColor: COLORS.danger[500], marginTop: SPACING.sm }}
+              textStyle={{ color: COLORS.danger[600] }}
+            />
+          </Card>
+        )}
       </ScrollView>
     </View>
   );
@@ -245,5 +317,95 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs + 2,
     ...TYPOGRAPHY.bodySmall,
     color: COLORS.text,
+  },
+  notifBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.gray[100] || '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    marginRight: 4,
+  },
+  notifBellIcon: {
+    fontSize: 18,
+  },
+  notifBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.danger[500],
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: COLORS.surface,
+  },
+  notifBadgeText: {
+    color: COLORS.white,
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  notifCardTouch: {
+    marginBottom: SPACING.md,
+  },
+  notifMenuCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: SPACING.md,
+    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+  },
+  notifCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  notifIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e0e7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notifCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.text || '#111827',
+  },
+  notifCardSub: {
+    fontSize: 12,
+    color: COLORS.textSecondary || '#6b7280',
+    marginTop: 2,
+  },
+  notifCardRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  newBadge: {
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  newBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  chevron: {
+    fontSize: 18,
+    color: '#9ca3af',
+    marginLeft: 4,
   },
 });

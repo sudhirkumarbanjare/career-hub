@@ -251,6 +251,52 @@ class AdminServiceManager {
     },
   ];
 
+  // 8b. Administrative Incoming Alerts & Notifications
+  private adminNotifications: AppNotification[] = [
+    {
+      id: 'anotif-1',
+      userId: 'usr_admin_root',
+      title: 'New Client Awaiting Verification',
+      body: 'Apex Dynamics Ltd completed employer KYC. Awaiting business review and approval.',
+      read: false,
+      createdAt: new Date(Date.now() - 3600000 * 1).toISOString(),
+      deepLink: 'tech2place://admin/clientApprovals',
+    },
+    {
+      id: 'anotif-2',
+      userId: 'usr_admin_root',
+      title: 'Job Posting Review Required',
+      body: 'Nexus Innovations Ltd submitted "AI Computer Vision Pipeline Engineer" for moderation.',
+      read: false,
+      createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+      deepLink: 'tech2place://admin/jobApprovals',
+    },
+    {
+      id: 'anotif-3',
+      userId: 'usr_admin_root',
+      title: 'System Activity Alert',
+      body: 'High candidate application volume detected on mobile developer positions.',
+      read: false,
+      createdAt: new Date(Date.now() - 3600000 * 7).toISOString(),
+    },
+    {
+      id: 'anotif-4',
+      userId: 'usr_admin_root',
+      title: 'Automated Snapshot Verified',
+      body: 'Nightly database backup and audit ledger checkpoint completed successfully.',
+      read: true,
+      createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+    },
+    {
+      id: 'anotif-5',
+      userId: 'usr_admin_root',
+      title: 'Release Version 1.0.1 Staged',
+      body: 'Optional client and student app upgrade manifests have been published to version control.',
+      read: true,
+      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    },
+  ];
+
   // 9. Feature Flags
   private featureFlags: FeatureFlag[] = [
     {
@@ -717,6 +763,34 @@ class AdminServiceManager {
   // --- Audit Logs ---
   getAuditLogs(): AuditLogEntry[] {
     return this.auditLogs;
+  }
+
+  // --- Administrative Incoming Notifications & Alerts ---
+  getAdminNotifications(): AppNotification[] {
+    return this.adminNotifications;
+  }
+
+  getUnreadAdminNotificationsCount(): number {
+    return this.adminNotifications.filter((n) => !n.read).length;
+  }
+
+  markAdminNotificationRead(id: string) {
+    const notif = this.adminNotifications.find((n) => n.id === id);
+    if (notif) notif.read = true;
+  }
+
+  markAllAdminNotificationsAsRead() {
+    this.adminNotifications.forEach((n) => {
+      n.read = true;
+    });
+  }
+
+  deleteAdminNotification(id: string) {
+    this.adminNotifications = this.adminNotifications.filter((n) => n.id !== id);
+  }
+
+  clearAllAdminNotifications() {
+    this.adminNotifications = [];
   }
 }
 

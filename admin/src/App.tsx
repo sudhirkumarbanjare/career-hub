@@ -30,6 +30,7 @@ import { AdminStaffScreen } from './screens/staff/AdminStaffScreen';
 import { AdminAuditLogsScreen } from './screens/audit/AdminAuditLogsScreen';
 import { AdminCategoriesScreen } from './screens/categories/AdminCategoriesScreen';
 import { AdminSettingsScreen } from './screens/settings/AdminSettingsScreen';
+import { AdminNotificationsScreen } from './screens/notifications/AdminNotificationsScreen';
 
 type AuthStage = 'login' | 'otp' | 'authenticated';
 type AdminTab =
@@ -40,6 +41,7 @@ type AdminTab =
   | 'jobs'
   | 'versions'
   | 'notifications'
+  | 'adminInbox'
   | 'staff'
   | 'categories'
   | 'audit'
@@ -109,6 +111,7 @@ export const App: React.FC = () => {
   // Count pending items for badges
   const pendingClientsCount = AdminService.getPendingClients().length;
   const pendingJobsCount = AdminService.getPendingJobs().length;
+  const unreadAlertsCount = AdminService.getUnreadAdminNotificationsCount();
 
   const navigateTo = (tab: AdminTab) => {
     setActiveTab(tab);
@@ -126,23 +129,26 @@ export const App: React.FC = () => {
             onNavigateUsers={() => setActiveTab('users')}
             onNavigateClientApprovals={() => setActiveTab('clientApprovals')}
             onNavigateJobApprovals={() => setActiveTab('jobApprovals')}
-            onNavigateJobs={() => setActiveTab('jobs')}
-            onNavigateVersions={() => setActiveTab('versions')}
             onNavigateNotifications={() => setActiveTab('notifications')}
-            onNavigateAuditLogs={() => setActiveTab('audit')}
+            onNavigateAdminInbox={() => setActiveTab('adminInbox')}
+            onNavigateVersions={() => setActiveTab('versions')}
+            onNavigateStaff={() => setActiveTab('staff')}
+            onNavigateCategories={() => setActiveTab('categories')}
+            onNavigateAudit={() => setActiveTab('audit')}
+            onNavigateSettings={() => setActiveTab('settings')}
           />
         )}
 
-        {activeTab === 'users' && (
-          <AdminUsersScreen onBack={() => setActiveTab('dashboard')} />
-        )}
-
         {activeTab === 'clientApprovals' && (
-          <ClientApprovalsScreen onBack={() => setActiveTab('dashboard')} />
+          <ClientApprovalsScreen
+            onBack={() => setActiveTab('dashboard')}
+          />
         )}
 
         {activeTab === 'jobApprovals' && (
-          <JobApprovalsScreen onBack={() => setActiveTab('dashboard')} />
+          <JobApprovalsScreen
+            onBack={() => setActiveTab('dashboard')}
+          />
         )}
 
         {activeTab === 'jobs' && (
@@ -152,32 +158,60 @@ export const App: React.FC = () => {
           />
         )}
 
+        {activeTab === 'users' && (
+          <AdminUsersScreen
+            onBack={() => setActiveTab('dashboard')}
+          />
+        )}
+
         {activeTab === 'versions' && (
-          <AdminVersionManagementScreen onBack={() => setActiveTab('dashboard')} />
+          <AdminVersionManagementScreen
+            onBack={() => setActiveTab('dashboard')}
+          />
         )}
 
         {activeTab === 'notifications' && (
-          <AdminNotificationComposerScreen onBack={() => setActiveTab('dashboard')} />
+          <AdminNotificationComposerScreen
+            onBack={() => setActiveTab('dashboard')}
+          />
+        )}
+
+        {activeTab === 'adminInbox' && (
+          <AdminNotificationsScreen
+            onBack={() => setActiveTab('dashboard')}
+            onNavigateClients={() => setActiveTab('clientApprovals')}
+            onNavigateJobs={() => setActiveTab('jobApprovals')}
+          />
         )}
 
         {activeTab === 'staff' && (
-          <AdminStaffScreen onBack={() => setActiveTab('dashboard')} />
+          <AdminStaffScreen
+            onBack={() => setActiveTab('dashboard')}
+          />
         )}
 
         {activeTab === 'categories' && (
-          <AdminCategoriesScreen onBack={() => setActiveTab('dashboard')} />
+          <AdminCategoriesScreen
+            onBack={() => setActiveTab('dashboard')}
+          />
         )}
 
         {activeTab === 'audit' && (
-          <AdminAuditLogsScreen onBack={() => setActiveTab('dashboard')} />
+          <AdminAuditLogsScreen
+            onBack={() => setActiveTab('dashboard')}
+          />
         )}
 
         {activeTab === 'settings' && (
-          <AdminSettingsScreen onBack={() => setActiveTab('dashboard')} />
+          <AdminSettingsScreen
+            onBack={() => setActiveTab('dashboard')}
+            onLogout={handleLogout}
+            onNavigateToNotifications={() => setActiveTab('adminInbox')}
+          />
         )}
       </View>
 
-      {/* Bottom Navigation Bar */}
+      {/* Global Bottom Navigation */}
       <View style={styles.bottomNav}>
         <TouchableOpacity
           style={[styles.navItem, activeTab === 'dashboard' && styles.navItemActive]}
@@ -196,7 +230,9 @@ export const App: React.FC = () => {
           onPress={() => setActiveTab('clientApprovals')}
         >
           <View>
-            <Text style={[styles.navIcon, activeTab === 'clientApprovals' && styles.navIconActive]}>
+            <Text
+              style={[styles.navIcon, activeTab === 'clientApprovals' && styles.navIconActive]}
+            >
               🏢
             </Text>
             {pendingClientsCount > 0 && (
@@ -205,7 +241,9 @@ export const App: React.FC = () => {
               </View>
             )}
           </View>
-          <Text style={[styles.navText, activeTab === 'clientApprovals' && styles.navTextActive]}>
+          <Text
+            style={[styles.navText, activeTab === 'clientApprovals' && styles.navTextActive]}
+          >
             Clients
           </Text>
         </TouchableOpacity>
@@ -245,7 +283,14 @@ export const App: React.FC = () => {
           style={[styles.navItem, menuModalVisible && styles.navItemActive]}
           onPress={() => setMenuModalVisible(true)}
         >
-          <Text style={styles.navIcon}>⚙️</Text>
+          <View>
+            <Text style={styles.navIcon}>⚙️</Text>
+            {unreadAlertsCount > 0 && (
+              <View style={[styles.navBadge, { backgroundColor: COLORS.danger[500] }]}>
+                <Text style={styles.navBadgeText}>{unreadAlertsCount}</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.navText}>Menu</Text>
         </TouchableOpacity>
       </View>
@@ -257,13 +302,45 @@ export const App: React.FC = () => {
         onClose={() => setMenuModalVisible(false)}
       >
         <View style={styles.adminProfileHeader}>
-          <Text style={styles.adminNameText}>{adminUser.name}</Text>
-          <Text style={styles.adminRoleText}>
-            Role: {adminUser.role.toUpperCase()} • {adminUser.phoneNumber}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.adminNameText}>{adminUser.name}</Text>
+            <Text style={styles.adminRoleText}>
+              Role: {adminUser.role.toUpperCase()} • {adminUser.phoneNumber}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.profileHeaderNotifBtn}
+            onPress={() => navigateTo('adminInbox')}
+            activeOpacity={0.7}
+          >
+            <Text style={{ fontSize: 20 }}>🔔</Text>
+            {unreadAlertsCount > 0 && (
+              <View style={styles.profileHeaderNotifBadge}>
+                <Text style={styles.profileHeaderNotifBadgeText}>{unreadAlertsCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.menuList}>
+          <TouchableOpacity
+            style={[styles.menuItem, { backgroundColor: '#F8FAFC', borderRadius: 8, paddingHorizontal: SPACING.sm, marginBottom: 4 }]}
+            onPress={() => navigateTo('adminInbox')}
+          >
+            <Text style={styles.menuIcon}>🔔</Text>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.menuTitle}>System Alerts & Notifications</Text>
+                {unreadAlertsCount > 0 && (
+                  <View style={styles.menuBadge}>
+                    <Text style={styles.menuBadgeText}>{unreadAlertsCount} unread</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.menuSub}>Platform activity, verification requests & alerts</Text>
+            </View>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => navigateTo('versions')}
@@ -336,7 +413,7 @@ export const App: React.FC = () => {
           >
             <Text style={styles.menuIcon}>🚪</Text>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.menuTitle, { color: COLORS.danger }]}>Sign Out</Text>
+              <Text style={[styles.menuTitle, { color: COLORS.danger[500] }]}>Sign Out</Text>
               <Text style={styles.menuSub}>End current administrative session</Text>
             </View>
           </TouchableOpacity>
@@ -358,9 +435,9 @@ const styles = StyleSheet.create({
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: COLORS.card,
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: '#e2e8f0',
     paddingVertical: 6,
     paddingBottom: SPACING.xs,
   },
@@ -384,18 +461,18 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     fontSize: 10,
     fontWeight: '600',
-    color: COLORS.textSecondary,
+    color: '#64748b',
     marginTop: 2,
   },
   navTextActive: {
-    color: COLORS.primary,
+    color: '#026fc7',
     fontWeight: '700',
   },
   navBadge: {
     position: 'absolute',
     top: -4,
     right: -8,
-    backgroundColor: COLORS.warning,
+    backgroundColor: '#f59e0b',
     borderRadius: 8,
     minWidth: 16,
     height: 16,
@@ -407,24 +484,62 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     fontSize: 9,
     fontWeight: '700',
-    color: COLORS.white,
+    color: '#ffffff',
   },
   adminProfileHeader: {
-    backgroundColor: COLORS.background,
-    borderRadius: 8,
-    padding: SPACING.sm,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 10,
+    padding: SPACING.md,
     marginBottom: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  profileHeaderNotifBtn: {
+    padding: SPACING.xs,
+    position: 'relative',
+    marginLeft: SPACING.sm,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  profileHeaderNotifBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#ef4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  profileHeaderNotifBadgeText: {
+    ...TYPOGRAPHY.caption,
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   adminNameText: {
     ...TYPOGRAPHY.body,
     fontWeight: '700',
-    color: COLORS.text,
+    color: '#0f172a',
+    fontSize: 16,
   },
   adminRoleText: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.primary,
-    fontWeight: '600',
+    color: '#026fc7',
+    fontWeight: '700',
     marginTop: 2,
+    fontSize: 12,
   },
   menuList: {
     marginBottom: SPACING.sm,
@@ -434,7 +549,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: '#f1f5f9',
   },
   menuIcon: {
     fontSize: 20,
@@ -443,11 +558,25 @@ const styles = StyleSheet.create({
   menuTitle: {
     ...TYPOGRAPHY.bodySmall,
     fontWeight: '700',
-    color: COLORS.text,
+    color: '#0f172a',
+    fontSize: 14,
+  },
+  menuBadge: {
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    marginLeft: SPACING.xs,
+  },
+  menuBadgeText: {
+    ...TYPOGRAPHY.caption,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   menuSub: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
+    color: '#64748b',
     fontSize: 11,
     marginTop: 1,
   },

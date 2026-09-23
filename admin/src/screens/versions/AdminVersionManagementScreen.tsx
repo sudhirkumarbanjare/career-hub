@@ -149,7 +149,7 @@ export const AdminVersionManagementScreen: React.FC<AdminVersionManagementScreen
         <Card
           style={[
             styles.card,
-            maintenance && { borderColor: COLORS.warning, borderWidth: 1.5 },
+            maintenance && { borderColor: COLORS.warning[500], borderWidth: 1.5 },
           ]}
         >
           <View style={styles.cardHeaderRow}>
@@ -162,7 +162,7 @@ export const AdminVersionManagementScreen: React.FC<AdminVersionManagementScreen
             <Switch
               value={maintenance}
               onValueChange={toggleMaintenanceModeQuick}
-              trackColor={{ false: COLORS.border, true: COLORS.warning }}
+              trackColor={{ false: COLORS.border, true: COLORS.warning[500] }}
               thumbColor={COLORS.white}
             />
           </View>
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.warning,
+    backgroundColor: COLORS.warning[500],
     marginLeft: 4,
   },
   scrollContent: {

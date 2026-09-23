@@ -20,17 +20,21 @@ import {
 } from '@tech2place/shared';
 
 export interface AdminOtpScreenProps {
-  verificationId: string;
+  verificationId?: string;
   phoneNumber: string;
-  onOtpVerified: (user: User) => void;
-  onChangePhone: () => void;
+  onOtpVerified?: (user: User) => void;
+  onSuccess?: (user: User) => void;
+  onChangePhone?: () => void;
+  onBack?: () => void;
 }
 
 export const AdminOtpScreen: React.FC<AdminOtpScreenProps> = ({
-  verificationId,
+  verificationId = 'mock_verification_id',
   phoneNumber,
   onOtpVerified,
+  onSuccess,
   onChangePhone,
+  onBack,
 }) => {
   const [otp, setOtp] = useState('123456');
   const [loading, setLoading] = useState(false);
@@ -48,7 +52,8 @@ export const AdminOtpScreen: React.FC<AdminOtpScreenProps> = ({
           setError(accessCheck.reason || 'Access denied: Not an administrative account.');
           return;
         }
-        onOtpVerified(res.user);
+        onOtpVerified?.(res.user);
+        onSuccess?.(res.user);
       } else {
         setError(res.error || 'Invalid admin OTP code.');
       }

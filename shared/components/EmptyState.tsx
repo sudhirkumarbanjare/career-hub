@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { COLORS } from '../theme/colors';
 import { SPACING } from '../theme/spacing';
 import { TYPOGRAPHY } from '../theme/typography';
@@ -7,26 +7,37 @@ import { Button } from './Button';
 
 export interface EmptyStateProps {
   title: string;
-  description: string;
+  description?: string;
+  message?: string;
   icon?: React.ReactNode;
+  iconName?: string;
   actionTitle?: string;
   onAction?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
+  message,
   icon,
+  iconName,
   actionTitle,
   onAction,
   style,
 }) => {
+  const desc = description ?? message ?? '';
+
   return (
     <View style={[styles.container, style]}>
       {icon ? <View style={styles.iconWrapper}>{icon}</View> : null}
+      {!icon && iconName ? (
+        <View style={styles.iconWrapper}>
+          <Text style={{ fontSize: 36 }}>{iconName}</Text>
+        </View>
+      ) : null}
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
+      {desc ? <Text style={styles.description}>{desc}</Text> : null}
       {actionTitle && onAction ? (
         <Button
           title={actionTitle}

@@ -60,7 +60,7 @@ export const AdminJobsScreen: React.FC<AdminJobsScreenProps> = ({
     const matchesSearch =
       searchQuery.trim() === '' ||
       j.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      j.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (j.clientName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       j.category.toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesStatus && matchesSearch;
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
   },
   pendingBadge: {
-    backgroundColor: COLORS.warning,
+    backgroundColor: COLORS.warning[500],
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   },
   pendingArrow: {
     fontSize: 16,
-    color: COLORS.warning,
+    color: COLORS.warning[600],
     fontWeight: '700',
   },
   searchContainer: {

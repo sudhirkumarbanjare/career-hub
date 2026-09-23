@@ -28,8 +28,25 @@ class StudentServiceManager {
       userId: 'usr_student',
       title: 'Welcome to TECH2PLACE',
       body: 'Explore major & minor projects, enroll in industry courses, and apply to top client jobs.',
+      read: true,
+      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    },
+    {
+      id: 'notif-2',
+      userId: 'usr_student',
+      title: 'New Job Match: React Native Engineer',
+      body: 'Nexus Innovations Ltd posted a new position matching your skills: React Native, TypeScript & Firebase.',
       read: false,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+      deepLink: 'tech2place://student/job/job-c1',
+    },
+    {
+      id: 'notif-3',
+      userId: 'usr_student',
+      title: 'Course Enrollment Confirmed',
+      body: 'You have been enrolled in "Full-Stack Mobile Architecture". Your learning track is now live.',
+      read: false,
+      createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
     },
   ];
   private savedJobIds: Set<string> = new Set();
@@ -299,9 +316,27 @@ class StudentServiceManager {
     return this.notifications;
   }
 
+  getUnreadNotificationsCount(): number {
+    return this.notifications.filter((n) => !n.read).length;
+  }
+
   markNotificationAsRead(id: string) {
     const notif = this.notifications.find((n) => n.id === id);
     if (notif) notif.read = true;
+  }
+
+  markAllNotificationsAsRead() {
+    this.notifications.forEach((n) => {
+      n.read = true;
+    });
+  }
+
+  deleteNotification(id: string) {
+    this.notifications = this.notifications.filter((n) => n.id !== id);
+  }
+
+  clearAllNotifications() {
+    this.notifications = [];
   }
 }
 

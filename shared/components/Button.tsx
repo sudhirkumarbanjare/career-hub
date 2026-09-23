@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ViewStyle,
   TextStyle,
+  StyleProp,
 } from 'react-native';
 import { COLORS } from '../theme/colors';
 import { SPACING, RADIUS } from '../theme/spacing';
@@ -15,11 +16,11 @@ export interface ButtonProps {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'small' | 'medium' | 'large';
   loading?: boolean;
   disabled?: boolean;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   icon?: React.ReactNode;
 }
 
@@ -38,10 +39,10 @@ export const Button: React.FC<ButtonProps> = ({
     const base: ViewStyle = { ...styles.base };
 
     // Size
-    if (size === 'sm') {
+    if (size === 'sm' || size === 'small') {
       base.paddingVertical = SPACING.xs + 2;
       base.paddingHorizontal = SPACING.md;
-    } else if (size === 'lg') {
+    } else if (size === 'lg' || size === 'large') {
       base.paddingVertical = SPACING.base;
       base.paddingHorizontal = SPACING.xl;
     } else {

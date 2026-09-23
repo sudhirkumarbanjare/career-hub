@@ -20,26 +20,89 @@ import {
 import { AdminService } from '../../services/adminService';
 
 export interface AdminDashboardScreenProps {
-  onNavigate: (screen: string, params?: any) => void;
+  onNavigate?: (screen: string, params?: any) => void;
+  onNavigateUsers?: () => void;
+  onNavigateClientApprovals?: () => void;
+  onNavigateJobApprovals?: () => void;
+  onNavigateJobs?: () => void;
+  onNavigateVersions?: () => void;
+  onNavigateNotifications?: () => void;
+  onNavigateStaff?: () => void;
+  onNavigateCategories?: () => void;
+  onNavigateAuditLogs?: () => void;
+  onNavigateAudit?: () => void;
+  onNavigateSettings?: () => void;
+  onNavigateAdminInbox?: () => void;
 }
 
 export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
   onNavigate,
+  onNavigateUsers,
+  onNavigateClientApprovals,
+  onNavigateJobApprovals,
+  onNavigateJobs,
+  onNavigateVersions,
+  onNavigateNotifications,
+  onNavigateStaff,
+  onNavigateCategories,
+  onNavigateAuditLogs,
+  onNavigateAudit,
+  onNavigateSettings,
+  onNavigateAdminInbox,
 }) => {
   const [dateFilter, setDateFilter] = useState<'today' | '7d' | '30d' | 'all'>('7d');
   const stats = AdminService.getDashboardStats();
   const currentAdmin = AdminService.getCurrentAdmin();
+  const unreadNotifsCount = AdminService.getUnreadAdminNotificationsCount();
+
+  const handleNav = (screen: string, params?: any) => {
+    if (screen === 'users' && onNavigateUsers) onNavigateUsers();
+    else if (screen === 'client-approvals' && onNavigateClientApprovals) onNavigateClientApprovals();
+    else if (screen === 'job-approvals' && onNavigateJobApprovals) onNavigateJobApprovals();
+    else if (screen === 'jobs' && onNavigateJobs) onNavigateJobs();
+    else if (screen === 'version-management' && onNavigateVersions) onNavigateVersions();
+    else if (screen === 'notifications' && onNavigateNotifications) onNavigateNotifications();
+    else if (screen === 'staff' && onNavigateStaff) onNavigateStaff();
+    else if (screen === 'categories' && onNavigateCategories) onNavigateCategories();
+    else if ((screen === 'audit-logs' || screen === 'audit') && (onNavigateAuditLogs || onNavigateAudit)) {
+      (onNavigateAuditLogs || onNavigateAudit)!();
+    }
+    else if (screen === 'settings' && onNavigateSettings) onNavigateSettings();
+    else if (screen === 'adminInbox' && onNavigateAdminInbox) onNavigateAdminInbox();
+    else if (onNavigate) onNavigate(screen, params);
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Admin Hero Header */}
       <View style={styles.heroCard}>
         <View style={styles.heroTop}>
-          <View>
+          <View style={{ flex: 1, marginRight: SPACING.sm }}>
             <Text style={styles.greeting}>Console Superuser</Text>
-            <Text style={styles.adminName}>{currentAdmin.name}</Text>
+            <Text style={styles.adminName} numberOfLines={1} ellipsizeMode="tail">
+              {currentAdmin.name}
+            </Text>
           </View>
-          <Badge label="SUPERUSER 🛡️" variant="brand" size="md" />
+          <View style={styles.heroRightActions}>
+            <TouchableOpacity
+              onPress={() => {
+                if (onNavigateAdminInbox) onNavigateAdminInbox();
+                else if (onNavigate) onNavigate('adminInbox');
+              }}
+              style={styles.heroNotifBtn}
+              activeOpacity={0.7}
+            >
+              <Text style={{ fontSize: 18 }}>🔔</Text>
+              {unreadNotifsCount > 0 ? (
+                <View style={styles.heroNotifBadge}>
+                  <Text style={styles.heroNotifBadgeText}>
+                    {unreadNotifsCount > 9 ? '9+' : unreadNotifsCount}
+                  </Text>
+                </View>
+              ) : null}
+            </TouchableOpacity>
+            <Badge label="SUPERUSER 🛡️" variant="brand" size="md" />
+          </View>
         </View>
 
         {/* Action Highlights */}
@@ -52,7 +115,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
             <View style={styles.alertBtns}>
               {stats.pendingClients > 0 && (
                 <TouchableOpacity
-                  onPress={() => onNavigate('client-approvals')}
+                  onPress={() => handleNav('client-approvals')}
                   style={styles.alertActionBtn}
                 >
                   <Text style={styles.alertBtnText}>Verify Clients →</Text>
@@ -60,7 +123,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
               )}
               {stats.pendingJobs > 0 && (
                 <TouchableOpacity
-                  onPress={() => onNavigate('job-approvals')}
+                  onPress={() => handleNav('job-approvals')}
                   style={styles.alertActionBtn}
                 >
                   <Text style={styles.alertBtnText}>Review Jobs →</Text>
@@ -94,7 +157,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
           subtitle="Enrolled & verified"
           icon={<Text style={{ fontSize: 18 }}>🎓</Text>}
           iconBgColor={COLORS.brand[50]}
-          onPress={() => onNavigate('users', { role: 'student' })}
+          onPress={() => handleNav('users', { role: 'student' })}
           style={styles.statItem}
         />
 
@@ -104,7 +167,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
           subtitle={`${stats.approvedClients} approved`}
           icon={<Text style={{ fontSize: 18 }}>🏢</Text>}
           iconBgColor={COLORS.success[50]}
-          onPress={() => onNavigate('users', { role: 'client' })}
+          onPress={() => handleNav('users', { role: 'client' })}
           style={styles.statItem}
         />
 
@@ -114,7 +177,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
           subtitle="Awaiting review"
           icon={<Text style={{ fontSize: 18 }}>⏳</Text>}
           iconBgColor={COLORS.warning[50]}
-          onPress={() => onNavigate('client-approvals')}
+          onPress={() => handleNav('client-approvals')}
           style={styles.statItem}
         />
 
@@ -124,7 +187,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
           subtitle={`${stats.pendingJobs} pending approval`}
           icon={<Text style={{ fontSize: 18 }}>💼</Text>}
           iconBgColor={COLORS.purple[50]}
-          onPress={() => onNavigate('job-approvals')}
+          onPress={() => handleNav('job-approvals')}
           style={styles.statItem}
         />
       </View>
@@ -134,7 +197,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
       <View style={styles.navGrid}>
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => onNavigate('users')}
+          onPress={() => handleNav('users')}
           activeOpacity={0.75}
         >
           <Text style={styles.navIcon}>👥</Text>
@@ -144,7 +207,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
 
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => onNavigate('client-approvals')}
+          onPress={() => handleNav('client-approvals')}
           activeOpacity={0.75}
         >
           <Text style={styles.navIcon}>🏢</Text>
@@ -154,7 +217,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
 
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => onNavigate('job-approvals')}
+          onPress={() => handleNav('job-approvals')}
           activeOpacity={0.75}
         >
           <Text style={styles.navIcon}>💼</Text>
@@ -164,7 +227,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
 
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => onNavigate('version-management')}
+          onPress={() => handleNav('version-management')}
           activeOpacity={0.75}
         >
           <Text style={styles.navIcon}>📱</Text>
@@ -174,7 +237,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
 
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => onNavigate('notifications')}
+          onPress={() => handleNav('notifications')}
           activeOpacity={0.75}
         >
           <Text style={styles.navIcon}>📢</Text>
@@ -184,7 +247,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
 
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => onNavigate('staff')}
+          onPress={() => handleNav('staff')}
           activeOpacity={0.75}
         >
           <Text style={styles.navIcon}>🛡️</Text>
@@ -194,7 +257,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
 
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => onNavigate('categories')}
+          onPress={() => handleNav('categories')}
           activeOpacity={0.75}
         >
           <Text style={styles.navIcon}>🏷️</Text>
@@ -204,7 +267,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({
 
         <TouchableOpacity
           style={styles.navCard}
-          onPress={() => onNavigate('audit-logs')}
+          onPress={() => handleNav('audit-logs')}
           activeOpacity={0.75}
         >
           <Text style={styles.navIcon}>📜</Text>
@@ -258,7 +321,7 @@ const styles = StyleSheet.create({
   },
   alertText: {
     fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.warning[400],
+    color: COLORS.warning[500],
     lineHeight: 18,
     fontWeight: TYPOGRAPHY.weights.medium,
   },
@@ -291,24 +354,26 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.sm,
-    marginBottom: SPACING.lg,
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
   },
   statItem: {
-    width: '48.5%',
+    width: '48%',
+    marginBottom: SPACING.sm,
   },
   navGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.sm,
+    justifyContent: 'space-between',
   },
   navCard: {
-    width: '48.5%',
+    width: '48%',
+    marginBottom: SPACING.sm,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.gray[200],
     borderRadius: RADIUS.lg,
-    padding: SPACING.base,
+    padding: SPACING.md,
   },
   navIcon: {
     fontSize: 26,
@@ -323,5 +388,38 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.gray[500],
     marginTop: 2,
+  },
+  heroRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  heroNotifBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  heroNotifBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary || '#1e1b4b',
+  },
+  heroNotifBadgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: 'bold',
   },
 });

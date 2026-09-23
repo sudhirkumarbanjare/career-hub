@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "109876543210",
+    "project_id": "tech2place-prod",
+    "storage_bucket": "tech2place-prod.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:109876543210:android:student1234567890",
+        "android_client_info": {
+          "package_name": "com.tech2place.student"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyFakeKeyForDevelopmentOnlyStudent123"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

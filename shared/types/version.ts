@@ -1,6 +1,6 @@
 export type AppId = 'student' | 'client' | 'admin';
 
-export type UpdateMode = 'optional' | 'force';
+export type UpdateMode = 'optional' | 'force' | 'flexible';
 
 export interface AppVersionConfig {
   appId: AppId;

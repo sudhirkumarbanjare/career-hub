@@ -58,7 +58,7 @@ export const JobApprovalsScreen: React.FC<JobApprovalsScreenProps> = ({
     const matchesSearch =
       searchQuery.trim() === '' ||
       j.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      j.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (j.clientName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       j.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       j.skills.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesFilter && matchesSearch;
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   rejectionNotice: {
     backgroundColor: '#fff5f5',
     borderLeftWidth: 3,
-    borderLeftColor: COLORS.danger,
+    borderLeftColor: COLORS.danger[600],
     padding: SPACING.sm,
     borderRadius: 4,
     marginVertical: SPACING.xs,
@@ -519,11 +519,11 @@ const styles = StyleSheet.create({
   rejectionNoticeTitle: {
     ...TYPOGRAPHY.caption,
     fontWeight: '700',
-    color: COLORS.danger,
+    color: COLORS.danger[600],
   },
   rejectionNoticeText: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.danger,
+    color: COLORS.danger[600],
     marginTop: 2,
   },
   footerRow: {

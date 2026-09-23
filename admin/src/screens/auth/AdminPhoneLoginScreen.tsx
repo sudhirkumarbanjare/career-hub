@@ -18,11 +18,13 @@ import {
 } from '@tech2place/shared';
 
 export interface AdminPhoneLoginScreenProps {
-  onOtpRequested: (verificationId: string, phone: string) => void;
+  onOtpRequested?: (verificationId: string, phone: string) => void;
+  onContinue?: (phone: string) => void;
 }
 
 export const AdminPhoneLoginScreen: React.FC<AdminPhoneLoginScreenProps> = ({
   onOtpRequested,
+  onContinue,
 }) => {
   const [phone, setPhone] = useState('9999988888');
   const [loading, setLoading] = useState(false);
@@ -32,9 +34,13 @@ export const AdminPhoneLoginScreen: React.FC<AdminPhoneLoginScreenProps> = ({
     setError('');
     setLoading(true);
     try {
+      if (onContinue) {
+        onContinue(phone);
+        return;
+      }
       const res = await AuthService.sendOtp(phone);
       if (res.success && res.verificationId) {
-        onOtpRequested(res.verificationId, res.formattedPhone);
+        onOtpRequested?.(res.verificationId, res.formattedPhone);
       } else {
         setError(res.error || 'Failed to send admin verification code.');
       }

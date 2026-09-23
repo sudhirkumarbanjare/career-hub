@@ -3,6 +3,13 @@ apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply plugin: "com.google.gms.google-services"
 
+react {
+    root = file("../../")
+    reactNativeDir = file("../../node_modules/react-native")
+    entryFile = file("../index.js")
+    jsRootDir = file("../")
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -47,6 +54,7 @@ android {
 
 dependencies {
     implementation("com.facebook.react:react-android")
+    implementation("com.facebook.react:hermes-android")
     implementation platform("com.google.firebase:firebase-bom:33.7.0")
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")

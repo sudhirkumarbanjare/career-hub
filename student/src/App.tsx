@@ -220,6 +220,7 @@ export const StudentApp: React.FC = () => {
       case 'profile':
         return (
           <StudentProfileScreen
+            onNavigateToNotifications={() => setStackScreen({ name: 'notifications' })}
             onLogout={() => {
               setUser(null);
               setOtpSession(null);

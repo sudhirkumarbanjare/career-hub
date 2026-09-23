@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { COLORS } from '../theme/colors';
 import { SPACING, RADIUS } from '../theme/spacing';
 import { TYPOGRAPHY } from '../theme/typography';
@@ -11,25 +11,29 @@ export type BadgeVariant =
   | 'danger'
   | 'info'
   | 'purple'
-  | 'gray';
+  | 'gray'
+  | 'default';
 
 export interface BadgeProps {
-  label: string;
+  label?: string;
+  text?: string;
   variant?: BadgeVariant;
   size?: 'sm' | 'md';
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   textStyle?: TextStyle;
   icon?: React.ReactNode;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
   label,
+  text,
   variant = 'brand',
   size = 'md',
   style,
   textStyle,
   icon,
 }) => {
+  const displayText = label ?? text ?? '';
   const getContainerStyle = (): ViewStyle => {
     const base: ViewStyle = { ...styles.badge };
     if (size === 'sm') {
@@ -110,7 +114,7 @@ export const Badge: React.FC<BadgeProps> = ({
   return (
     <View style={[getContainerStyle(), style]}>
       {icon ? <View style={{ marginRight: 4 }}>{icon}</View> : null}
-      <Text style={[getTextStyle(), textStyle]}>{label}</Text>
+      <Text style={[getTextStyle(), textStyle]}>{displayText}</Text>
     </View>
   );
 };

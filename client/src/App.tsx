@@ -29,6 +29,7 @@ import { CreateJobScreen } from './screens/jobs/CreateJobScreen';
 import { ClientJobDetailScreen } from './screens/jobs/ClientJobDetailScreen';
 import { JobApplicationsScreen } from './screens/applications/JobApplicationsScreen';
 import { ClientProfileScreen } from './screens/profile/ClientProfileScreen';
+import { ClientNotificationsScreen } from './screens/notifications/ClientNotificationsScreen';
 
 export const ClientApp: React.FC = () => {
   // 1. Version Check & Maintenance state
@@ -169,6 +170,16 @@ export const ClientApp: React.FC = () => {
               onBack={() => setStackScreen(null)}
             />
           );
+        case 'notifications':
+          return (
+            <ClientNotificationsScreen
+              onBack={() => setStackScreen(null)}
+              onOpenNotification={(deepLink) => {
+                setStackScreen(null);
+                setActiveTab('applications');
+              }}
+            />
+          );
       }
     }
 
@@ -202,6 +213,7 @@ export const ClientApp: React.FC = () => {
       case 'profile':
         return (
           <ClientProfileScreen
+            onNavigateToNotifications={() => setStackScreen({ name: 'notifications' })}
             onLogout={() => {
               setUser(null);
               setClientProfile(null);

@@ -42,7 +42,7 @@ export const AdminStaffScreen: React.FC<AdminStaffScreenProps> = ({
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>('moderator');
   const [selectedPermissions, setSelectedPermissions] = useState<Permission[]>(
-    DEFAULT_ROLE_CONFIGS.moderator.defaultPermissions
+    DEFAULT_ROLE_CONFIGS.moderator.permissions
   );
   const [saving, setSaving] = useState(false);
 
@@ -57,7 +57,7 @@ export const AdminStaffScreen: React.FC<AdminStaffScreenProps> = ({
   const handleRoleChange = (newRole: UserRole) => {
     setRole(newRole);
     if (newRole in DEFAULT_ROLE_CONFIGS) {
-      setSelectedPermissions([...DEFAULT_ROLE_CONFIGS[newRole].defaultPermissions]);
+      setSelectedPermissions([...DEFAULT_ROLE_CONFIGS[newRole].permissions]);
     }
   };
 
@@ -90,7 +90,7 @@ export const AdminStaffScreen: React.FC<AdminStaffScreenProps> = ({
     setPhoneNumber('');
     setEmail('');
     setRole('moderator');
-    setSelectedPermissions(DEFAULT_ROLE_CONFIGS.moderator.defaultPermissions);
+    setSelectedPermissions(DEFAULT_ROLE_CONFIGS.moderator.permissions);
     Alert.alert('Staff Created', `${name} has been added with ${role.toUpperCase()} privileges.`);
   };
 
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   },
   revokeText: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.danger,
+    color: COLORS.danger[600],
     fontWeight: '700',
   },
   fieldLabel: {

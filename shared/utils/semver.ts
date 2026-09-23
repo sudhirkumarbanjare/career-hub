@@ -61,7 +61,7 @@ export function evaluateUpdateStatus(
   currentVersion: string,
   minimumVersion: string,
   latestVersion: string,
-  updateMode: 'force' | 'optional'
+  updateMode: 'force' | 'optional' | 'flexible'
 ): { needsForceUpdate: boolean; needsOptionalUpdate: boolean } {
   // If current is less than minimum version, force update is ALWAYS required regardless of updateMode
   if (isVersionOlder(currentVersion, minimumVersion)) {
