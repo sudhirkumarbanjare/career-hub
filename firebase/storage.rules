@@ -1,0 +1,34 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User profile images
+    match /users/{userId}/profile/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(userId)
+                    && request.resource.size < 5 * 1024 * 1024
+                    && request.resource.contentType.matches('image/.*');
+      allow delete: if isOwner(userId);
+    }
+
+    // Job attachments (PDF, documents, images)
+    match /jobs/{jobId}/attachments/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+                    && request.resource.size < 10 * 1024 * 1024
+                    && (request.resource.contentType.matches('image/.*')
+                        || request.resource.contentType == 'application/pdf'
+                        || request.resource.contentType.matches('application/vnd.*')
+                        || request.resource.contentType.matches('text/.*'));
+      allow delete: if isAuthenticated();
+    }
+  }
+}

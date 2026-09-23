@@ -1,0 +1,33 @@
+export const COLLECTIONS = {
+  USERS: 'users',
+  STUDENTS: 'students',
+  CLIENTS: 'clients',
+  ADMINS: 'admins',
+  STAFF: 'staff',
+  JOBS: 'jobs',
+  APPLICATIONS: 'applications',
+  PROJECTS: 'projects',
+  PROJECT_BOOKINGS: 'projectBookings',
+  COURSES: 'courses',
+  COURSE_ENROLLMENTS: 'courseEnrollments',
+  CATEGORIES: 'categories',
+  REPORTS: 'reports',
+  NOTIFICATIONS: 'notifications',
+  NOTIFICATION_CAMPAIGNS: 'notificationCampaigns',
+  AUDIT_LOGS: 'auditLogs',
+  APP_VERSIONS: 'appVersions',
+  ROLES: 'roles',
+  PERMISSIONS: 'permissions',
+  FEATURE_FLAGS: 'featureFlags',
+  SYSTEM_SETTINGS: 'systemSettings',
+} as const;
+
+export const FCM_TOPICS = {
+  ALL_USERS: 'all_users',
+  ALL_STUDENTS: 'all_students',
+  ALL_CLIENTS: 'all_clients',
+  ALL_ADMINS: 'all_admins',
+  STUDENT_APP: 'student_app',
+  CLIENT_APP: 'client_app',
+  ADMIN_APP: 'admin_app',
+} as const;
