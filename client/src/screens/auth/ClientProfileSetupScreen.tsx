@@ -16,7 +16,7 @@ import {
   Input,
   validateClientProfile,
   ClientProfile,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { ClientService } from '../../services/clientService';
 
 export interface ClientProfileSetupScreenProps {

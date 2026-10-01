@@ -16,7 +16,7 @@ import {
   StudentProfile,
   VersionCheckService,
   VersionCheckResult,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 
 import { StudentService } from './services/studentService';
 import { PhoneLoginScreen } from './screens/auth/PhoneLoginScreen';

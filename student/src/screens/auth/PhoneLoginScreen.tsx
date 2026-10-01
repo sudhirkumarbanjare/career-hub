@@ -16,7 +16,7 @@ import {
   AuthService,
   APP_NAME,
   APP_TAGLINE,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 
 export interface PhoneLoginScreenProps {
   onOtpRequested: (verificationId: string, formattedPhone: string) => void;

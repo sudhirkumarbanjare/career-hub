@@ -7,7 +7,7 @@ export interface ParsedDeepLink {
 export function parseDeepLink(url: string): ParsedDeepLink | null {
   try {
     if (!url) return null;
-    const cleanUrl = url.replace('tech2place://', '');
+    const cleanUrl = url.replace('gotechplace://', '').replace('tech2place://', '');
     const [pathPart, queryPart] = cleanUrl.split('?');
     const segments = pathPart.split('/').filter(Boolean);
 
@@ -18,7 +18,7 @@ export function parseDeepLink(url: string): ParsedDeepLink | null {
 
     const params: Record<string, string> = {};
 
-    // Check if 3rd segment is an ID, e.g. tech2place://student/job/job123
+    // Check if 3rd segment is an ID, e.g. gotechplace://student/job/job123
     if (segments[2]) {
       params.id = segments[2];
     }
@@ -46,7 +46,7 @@ export function generateDeepLink(
   screen: string,
   params?: Record<string, string | number>
 ): string {
-  let url = `tech2place://${app}/${screen}`;
+  let url = `gotechplace://${app}/${screen}`;
   if (params && Object.keys(params).length > 0) {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {

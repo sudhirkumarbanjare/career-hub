@@ -1,10 +1,12 @@
-export const APP_NAME = 'TECH2PLACE';
+export const APP_NAME = 'GoTechPlace';
+export const APP_DOMAIN = 'gotechplace.com';
+export const APP_URL = 'https://gotechplace.com';
 export const APP_TAGLINE = 'Empowering student projects, practical skills, and client career opportunities.';
 
 export const APPLICATION_IDS = {
-  student: 'com.tech2place.student',
-  client: 'com.tech2place.client',
-  admin: 'com.tech2place.admin',
+  student: 'com.gotechplace.student',
+  client: 'com.gotechplace.client',
+  admin: 'com.gotechplace.admin',
 } as const;
 
 export const DEFAULT_APP_VERSIONS = {
@@ -13,8 +15,8 @@ export const DEFAULT_APP_VERSIONS = {
     minimumVersion: '1.0.0',
     updateMode: 'optional' as const,
     updateTitle: 'Update Available',
-    updateMessage: 'A new version of TECH2PLACE Student is available. Please update for the best experience.',
-    androidStoreUrl: 'https://play.google.com/store/apps/details?id=com.tech2place.student',
+    updateMessage: 'A new version of GoTechPlace Student is available. Please update for the best experience.',
+    androidStoreUrl: 'https://play.google.com/store/apps/details?id=com.gotechplace.student',
     maintenance: false,
     enabled: true,
   },
@@ -23,8 +25,8 @@ export const DEFAULT_APP_VERSIONS = {
     minimumVersion: '1.0.0',
     updateMode: 'optional' as const,
     updateTitle: 'Update Available',
-    updateMessage: 'A new version of TECH2PLACE Client is available. Please update to continue posting and managing jobs.',
-    androidStoreUrl: 'https://play.google.com/store/apps/details?id=com.tech2place.client',
+    updateMessage: 'A new version of GoTechPlace Client is available. Please update to continue posting and managing jobs.',
+    androidStoreUrl: 'https://play.google.com/store/apps/details?id=com.gotechplace.client',
     maintenance: false,
     enabled: true,
   },
@@ -33,8 +35,8 @@ export const DEFAULT_APP_VERSIONS = {
     minimumVersion: '1.0.0',
     updateMode: 'force' as const,
     updateTitle: 'Required Admin Console Update',
-    updateMessage: 'A new secure version of TECH2PLACE Admin Console is required to access platform operations.',
-    androidStoreUrl: 'https://play.google.com/store/apps/details?id=com.tech2place.admin',
+    updateMessage: 'A new secure version of GoTechPlace Admin Console is required to access platform operations.',
+    androidStoreUrl: 'https://play.google.com/store/apps/details?id=com.gotechplace.admin',
     maintenance: false,
     enabled: true,
   },

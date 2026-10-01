@@ -18,7 +18,7 @@ import {
   Tabs,
   formatCurrency,
   Job,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { ClientService } from '../../services/clientService';
 
 export interface MyJobsScreenProps {

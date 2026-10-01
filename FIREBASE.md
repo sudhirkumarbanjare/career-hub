@@ -1,6 +1,6 @@
-# TECH2PLACE Firebase Architecture & Governance
+# GoTechPlace Firebase Architecture & Governance
 
-This document describes the Cloud Firestore data model, security rules, Cloud Functions, and Firebase Storage specifications for TECH2PLACE.
+This document describes the Cloud Firestore data model, security rules, Cloud Functions, and Firebase Storage specifications for GoTechPlace.
 
 ---
 

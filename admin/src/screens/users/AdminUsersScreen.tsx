@@ -22,7 +22,7 @@ import {
   Modal,
   formatDate,
   User,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
 export interface AdminUsersScreenProps {
@@ -245,7 +245,7 @@ export const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({
         title={confirmDialog.action === 'suspend' ? 'Suspend Account Access' : 'Activate Account Access'}
         message={
           confirmDialog.action === 'suspend'
-            ? `Are you sure you want to suspend ${confirmDialog.user?.name || confirmDialog.user?.phoneNumber}? They will be immediately blocked from signing into TECH2PLACE.`
+            ? `Are you sure you want to suspend ${confirmDialog.user?.name || confirmDialog.user?.phoneNumber}? They will be immediately blocked from signing into GoTechPlace.`
             : `Are you sure you want to reactivate access for ${confirmDialog.user?.name || confirmDialog.user?.phoneNumber}?`
         }
         confirmText={confirmDialog.action === 'suspend' ? 'Suspend Account' : 'Reactivate'}

@@ -1,6 +1,6 @@
-# TECH2PLACE Release & Deployment Runbook
+# GoTechPlace Release & Deployment Runbook
 
-This document defines the release procedures, versioning rules, Google Play Store distribution steps, and remote force-update management for the TECH2PLACE ecosystem.
+This document defines the release procedures, versioning rules, Google Play Store distribution steps, and remote force-update management for the GoTechPlace ecosystem.
 
 ---
 
@@ -24,7 +24,7 @@ defaultConfig {
 
 ## 2. Release Checklist
 
-1. [ ] Ensure all local changes are committed on branch `tech2place-react-native`.
+1. [ ] Ensure all local changes are committed on branch `gotechplace-ecosystem`.
 2. [ ] Run full automated test suite:
    ```bash
    npm test
@@ -66,6 +66,6 @@ In the event of database migrations or critical backend outages:
 1. In Admin Console -> **App Releases & Maintenance**, toggle **Maintenance Mode** to **ON**.
 2. Enter a user-friendly status message:
    ```text
-   TECH2PLACE is undergoing scheduled system upgrades. Please check back in 30 minutes.
+   GoTechPlace is undergoing scheduled system upgrades. Please check back in 30 minutes.
    ```
 3. Tap **Save**. All active sessions will immediately transition to the branded `MaintenanceScreen`, preventing any read/write operations until maintenance is disabled.

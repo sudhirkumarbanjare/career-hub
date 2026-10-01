@@ -20,7 +20,7 @@ import {
   Tabs,
   formatDate,
   JobApplication,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { ClientService } from '../../services/clientService';
 
 export interface JobApplicationsScreenProps {

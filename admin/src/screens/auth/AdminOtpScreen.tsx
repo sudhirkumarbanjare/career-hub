@@ -17,7 +17,7 @@ import {
   AuthService,
   RbacService,
   User,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 
 export interface AdminOtpScreenProps {
   verificationId?: string;

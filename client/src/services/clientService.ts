@@ -6,7 +6,7 @@ import {
   User,
   JobStatus,
   ApprovalStatus,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 
 class ClientServiceManager {
   private currentClient: ClientProfile | null = null;
@@ -110,7 +110,7 @@ class ClientServiceManager {
       body: 'Sneha Verma submitted an application for "Mobile App Developer".',
       read: false,
       createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-      deepLink: 'tech2place://client/applications',
+      deepLink: 'gotechplace://client/applications',
     },
     {
       id: 'notif-c3',

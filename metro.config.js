@@ -5,7 +5,7 @@ const projectRoot = __dirname;
 const defaultConfig = getDefaultConfig(projectRoot);
 
 /**
- * Metro configuration for TECH2PLACE monorepo
+ * Metro configuration for GoTechPlace monorepo
  * Supports student, client, admin, and shared packages
  */
 const config = {

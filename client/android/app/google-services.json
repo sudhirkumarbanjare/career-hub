@@ -1,15 +1,15 @@
 {
   "project_info": {
     "project_number": "109876543210",
-    "project_id": "tech2place-prod",
-    "storage_bucket": "tech2place-prod.appspot.com"
+    "project_id": "gotechplace-prod",
+    "storage_bucket": "gotechplace-prod.appspot.com"
   },
   "client": [
     {
       "client_info": {
         "mobilesdk_app_id": "1:109876543210:android:client1234567890",
         "android_client_info": {
-          "package_name": "com.tech2place.client"
+          "package_name": "com.gotechplace.client"
         }
       },
       "oauth_client": [],

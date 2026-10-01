@@ -1,9 +1,13 @@
 {
-  "name": "tech2place-ecosystem",
+  "name": "gotechplace-ecosystem",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
+    "website:dev": "npm run dev --prefix website",
+    "website:build": "npm run build --prefix website",
+    "website:lint": "npm run lint --prefix website",
     "student:start": "npm start --prefix student",
     "client:start": "npm start --prefix client",
     "admin:start": "npm start --prefix admin",
@@ -12,6 +16,7 @@
     "admin:android": "npm run android --prefix admin"
   },
   "workspaces": [
+    "website",
     "shared",
     "student",
     "client",

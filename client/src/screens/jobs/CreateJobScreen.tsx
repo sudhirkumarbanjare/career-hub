@@ -20,7 +20,7 @@ import {
   DEFAULT_CATEGORIES,
   validateJob,
   JobType,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { ClientService } from '../../services/clientService';
 
 export interface CreateJobScreenProps {

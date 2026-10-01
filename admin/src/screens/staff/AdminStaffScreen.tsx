@@ -23,7 +23,7 @@ import {
   ALL_PERMISSIONS,
   DEFAULT_ROLE_CONFIGS,
   formatRelativeDate,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
 interface AdminStaffScreenProps {
@@ -205,7 +205,7 @@ export const AdminStaffScreen: React.FC<AdminStaffScreenProps> = ({
             style={styles.input}
             value={email}
             onChangeText={setEmail}
-            placeholder="priya@tech2place.com"
+            placeholder="priya@gotechplace.com"
             keyboardType="email-address"
             autoCapitalize="none"
           />

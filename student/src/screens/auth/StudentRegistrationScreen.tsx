@@ -21,7 +21,7 @@ import {
   GENDERS,
   validateStudentProfile,
   StudentProfile,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { StudentService } from '../../services/studentService';
 
 export interface StudentRegistrationScreenProps {

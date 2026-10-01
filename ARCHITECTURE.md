@@ -1,6 +1,6 @@
-# TECH2PLACE Architecture Guide
+# GoTechPlace Architecture Guide
 
-This document defines the technical architecture, data contracts, security boundaries, and cross-application workflows powering the TECH2PLACE React Native ecosystem.
+This document defines the technical architecture, data contracts, security boundaries, and cross-application workflows powering the GoTechPlace React Native ecosystem.
 
 ---
 
@@ -17,7 +17,7 @@ This document defines the technical architecture, data contracts, security bound
                  ▼                              ▼                              ▼
     ┌─────────────────────────┐    ┌─────────────────────────┐    ┌─────────────────────────┐
     │     STUDENT APP         │    │       CLIENT APP        │    │       ADMIN APP         │
-    │ (com.tech2place.student)│    │ (com.tech2place.client) │    │  (com.tech2place.admin) │
+    │ (com.gotechplace.student)│    │ (com.gotechplace.client) │    │  (com.gotechplace.admin) │
     │                         │    │                         │    │                         │
     │ • Minor/Major Projects  │    │ • Employer Registration │    │ • Client Verifications  │
     │ • Approved Jobs Board   │    │ • Job Creation & Edit   │    │ • Job Moderation Board  │
@@ -29,7 +29,7 @@ This document defines the technical architecture, data contracts, security bound
                  └──────────────────────────────┼──────────────────────────────┘
                                                 ▼
                              ┌──────────────────────────────────────┐
-                             │          @tech2place/shared          │
+                             │          @gotechplace/shared          │
                              │  (Types, Utilities, Theme, Services,│
                              │      Design System UI Components)    │
                              └──────────────────────────────────────┘
@@ -41,7 +41,7 @@ This document defines the technical architecture, data contracts, security bound
 
 ```text
 ├── admin/                         # Administrative Console (React Native Android)
-│   ├── android/                   # Native Android configuration (com.tech2place.admin)
+│   ├── android/                   # Native Android configuration (com.gotechplace.admin)
 │   ├── src/
 │   │   ├── screens/               # Dashboard, Approvals, Users, Versions, Push, Staff, Audit
 │   │   ├── services/              # Admin state & API adapters
@@ -49,7 +49,7 @@ This document defines the technical architecture, data contracts, security bound
 │   └── package.json
 │
 ├── client/                        # Client / Employer App (React Native Android)
-│   ├── android/                   # Native Android configuration (com.tech2place.client)
+│   ├── android/                   # Native Android configuration (com.gotechplace.client)
 │   ├── src/
 │   │   ├── screens/               # Auth, Profile, Job creation, Applicant management
 │   │   ├── services/              # Client API adapters
@@ -57,7 +57,7 @@ This document defines the technical architecture, data contracts, security bound
 │   └── package.json
 │
 ├── student/                       # Student Mobile App (React Native Android)
-│   ├── android/                   # Native Android configuration (com.tech2place.student)
+│   ├── android/                   # Native Android configuration (com.gotechplace.student)
 │   ├── src/
 │   │   ├── screens/               # Dashboard, Projects, Jobs, Applications, Courses, Profile
 │   │   ├── services/              # Student API adapters
@@ -191,22 +191,22 @@ flowchart TD
 
 All three applications register deep links matching the standard schema:
 ```text
-tech2place://{appId}/{resource}/{id}
+gotechplace://{appId}/{resource}/{id}
 ```
 
 | Application | Scheme / Host | Target Destinations |
 |:---|:---|:---|
-| **Student** | `tech2place://student/jobs/:id` | Opens Job Detail screen directly |
-| **Student** | `tech2place://student/projects/:id` | Opens Academic Project screen |
-| **Client** | `tech2place://client/jobs/:id/applications` | Opens Candidate Review board |
-| **Admin** | `tech2place://admin/approvals/clients` | Opens Pending Clients review screen |
-| **Admin** | `tech2place://admin/approvals/jobs` | Opens Pending Jobs moderation screen |
+| **Student** | `gotechplace://student/jobs/:id` | Opens Job Detail screen directly |
+| **Student** | `gotechplace://student/projects/:id` | Opens Academic Project screen |
+| **Client** | `gotechplace://client/jobs/:id/applications` | Opens Candidate Review board |
+| **Admin** | `gotechplace://admin/approvals/clients` | Opens Pending Clients review screen |
+| **Admin** | `gotechplace://admin/approvals/jobs` | Opens Pending Jobs moderation screen |
 
 ---
 
 ## 6. In-App Notifications & Broadcast Campaigns
 
-All three mobile applications share a unified notification pipeline configured through `@tech2place/shared`.
+All three mobile applications share a unified notification pipeline configured through `@gotechplace/shared`.
 
 ### 6.1 Entity Schemas
 ```typescript
@@ -246,7 +246,7 @@ interface NotificationCampaign {
 
 ## 7. Security Architecture & RBAC Matrix
 
-TECH2PLACE enforces a dual-layer role-based access control (RBAC) model implemented client-side in `RbacService` and server-side in `firestore.rules`.
+GoTechPlace enforces a dual-layer role-based access control (RBAC) model implemented client-side in `RbacService` and server-side in `firestore.rules`.
 
 ### 7.1 Role Hierarchy
 
@@ -287,9 +287,9 @@ Each application in the monorepo is configured with its own standalone native An
 
 | App Directory | Package Identifier | Display Name |
 |:---|:---|:---|
-| `student/android/app` | `com.tech2place.student` | **Tech2Place Student** |
-| `client/android/app` | `com.tech2place.client` | **Tech2Place Client** |
-| `admin/android/app` | `com.tech2place.admin` | **Tech2Place Admin** |
+| `student/android/app` | `com.gotechplace.student` | **GoTechPlace Student** |
+| `client/android/app` | `com.gotechplace.client` | **GoTechPlace Client** |
+| `admin/android/app` | `com.gotechplace.admin` | **GoTechPlace Admin** |
 
 ### 8.3 Monorepo Metro Configuration
 Metro is configured at the workspace root (`metro.config.js`) to seamlessly bundle cross-package dependencies from `shared/`:

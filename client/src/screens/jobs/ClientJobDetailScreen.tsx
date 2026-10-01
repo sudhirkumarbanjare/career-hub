@@ -18,7 +18,7 @@ import {
   Button,
   Modal,
   formatCurrency,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { ClientService } from '../../services/clientService';
 
 export interface ClientJobDetailScreenProps {

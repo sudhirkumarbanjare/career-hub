@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, SPACING, TYPOGRAPHY, Button } from '@tech2place/shared';
+import { COLORS, SPACING, TYPOGRAPHY, Button } from '@gotechplace/shared';
 
 export interface MaintenanceScreenProps {
   message?: string;
@@ -8,7 +8,7 @@ export interface MaintenanceScreenProps {
 }
 
 export const MaintenanceScreen: React.FC<MaintenanceScreenProps> = ({
-  message = 'We are performing scheduled maintenance to improve TECH2PLACE. Please check back shortly.',
+  message = 'We are performing scheduled maintenance to improve GoTechPlace. Please check back shortly.',
   onRefresh,
 }) => {
   return (

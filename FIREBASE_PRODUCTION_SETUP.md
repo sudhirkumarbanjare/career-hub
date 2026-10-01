@@ -1,6 +1,6 @@
-# TECH2PLACE — Firebase Production Connection & Database Setup Guide
+# GoTechPlace — Firebase Production Connection & Database Setup Guide
 
-This guide provides end-to-end instructions for connecting the **TECH2PLACE** mobile ecosystem (**Student App**, **Client App**, **Admin Console**, and **Shared Library**) to a live production **Google Firebase** backend.
+This guide provides end-to-end instructions for connecting the **GoTechPlace** mobile ecosystem (**Student App**, **Client App**, **Admin Console**, and **Shared Library**) to a live production **Google Firebase** backend.
 
 ---
 
@@ -9,14 +9,14 @@ This guide provides end-to-end instructions for connecting the **TECH2PLACE** mo
 ```
                                 ┌─────────────────────────────────────────┐
                                 │      Firebase Production Platform       │
-                                │         (Project: tech2place-prod)       │
+                                │         (Project: gotechplace-prod)       │
                                 └────────────────────┬────────────────────┘
                                                      │
              ┌───────────────────────────────────────┼───────────────────────────────────────┐
              ▼                                       ▼                                       ▼
 ┌──────────────────────────┐            ┌──────────────────────────┐            ┌──────────────────────────┐
 │       Student App        │            │        Client App        │            │       Admin App          │
-│ (com.tech2place.student) │            │  (com.tech2place.client) │            │  (com.tech2place.admin)  │
+│ (com.gotechplace.student) │            │  (com.gotechplace.client) │            │  (com.gotechplace.admin)  │
 └────────────┬─────────────┘            └────────────┬─────────────┘            └────────────┬─────────────┘
              │                                       │                                       │
              │ SHA-1 / SHA-256                       │ SHA-1 / SHA-256                       │ SHA-1 / SHA-256
@@ -40,7 +40,7 @@ This guide provides end-to-end instructions for connecting the **TECH2PLACE** mo
 ### 1.1 Create the Firebase Project
 1. Navigate to the [Firebase Console](https://console.firebase.google.com/).
 2. Click **Add Project**.
-3. Enter Project Name: `tech2place-prod` (or your preferred organization slug).
+3. Enter Project Name: `gotechplace-prod` (or your preferred organization slug).
 4. **Google Analytics**: Enable Google Analytics (recommended for crash analytics, conversion events, and user engagement tracking). Choose or create an Analytics account.
 5. Click **Create Project**.
 
@@ -64,7 +64,7 @@ When enabling Firestore (Phase 3), select a region closest to your target audien
 
 ## Phase 2: Register All 3 Android Apps & Obtain `google-services.json`
 
-Because TECH2PLACE operates three distinct mobile applications with separate package names, you must register **three Android apps** within the **same Firebase project**.
+Because GoTechPlace operates three distinct mobile applications with separate package names, you must register **three Android apps** within the **same Firebase project**.
 
 ### 2.1 Retrieve Android Keystore Fingerprints (SHA-1 & SHA-256)
 
@@ -80,7 +80,7 @@ keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -sto
 #### Production Release Keystore Fingerprint:
 If you have created a production release keystore:
 ```bash
-keytool -list -v -keystore /path/to/tech2place-release.keystore -alias tech2place_alias
+keytool -list -v -keystore /path/to/gotechplace-release.keystore -alias gotechplace_alias
 ```
 
 ---
@@ -90,8 +90,8 @@ keytool -list -v -keystore /path/to/tech2place-release.keystore -alias tech2plac
 Navigate to **Project Settings > General > Your Apps > Add app (Android icon)**:
 
 #### 1. Student App
-- **Android package name**: `com.tech2place.student`
-- **App nickname**: `Tech2Place Student`
+- **Android package name**: `com.gotechplace.student`
+- **App nickname**: `GoTechPlace Student`
 - **Debug SHA-1**: Paste debug SHA-1
 - Click **Register App**.
 - Under **SHA certificate fingerprints**, click **Add fingerprint** and add the SHA-256.
@@ -103,8 +103,8 @@ Navigate to **Project Settings > General > Your Apps > Add app (Android icon)**:
 
 #### 2. Client / Employer App
 - Click **Add app > Android**.
-- **Android package name**: `com.tech2place.client`
-- **App nickname**: `Tech2Place Client`
+- **Android package name**: `com.gotechplace.client`
+- **App nickname**: `GoTechPlace Client`
 - **Debug SHA-1**: Paste debug SHA-1
 - Click **Register App**. Add SHA-256 fingerprint.
 - Download `google-services.json`.
@@ -115,8 +115,8 @@ Navigate to **Project Settings > General > Your Apps > Add app (Android icon)**:
 
 #### 3. Admin App
 - Click **Add app > Android**.
-- **Android package name**: `com.tech2place.admin`
-- **App nickname**: `Tech2Place Admin`
+- **Android package name**: `com.gotechplace.admin`
+- **App nickname**: `GoTechPlace Admin`
 - **Debug SHA-1**: Paste debug SHA-1
 - Click **Register App**. Add SHA-256 fingerprint.
 - Download `google-services.json`.
@@ -146,7 +146,7 @@ Under the Phone configuration modal:
 ### 3.3 Configure Play Integrity & SafetyNet (Android)
 To prevent SMS spoofing and abuse:
 1. Go to **Authentication > Settings > SMS Multi-Factor and reCAPTCHA**.
-2. Ensure **Play Integrity API** is enabled in the Google Cloud Console for project `tech2place-prod`.
+2. Ensure **Play Integrity API** is enabled in the Google Cloud Console for project `gotechplace-prod`.
 3. Link your Google Play Developer Console account if published to Google Play.
 
 ---
@@ -182,7 +182,7 @@ firebase login
 
 # 3. Select active project
 cd /Users/sudhir/Documents/Projects/7CareerHub/career-hub/firebase
-firebase use --add tech2place-prod
+firebase use --add gotechplace-prod
 
 # 4. Deploy rules
 firebase deploy --only firestore:rules
@@ -339,7 +339,7 @@ export function subscribeToApprovedJobs(callback: (jobs: Job[]) => void) {
 Before publishing APKs / AABs to Google Play or deploying to production users, verify the following:
 
 - [ ] **Blaze Billing Account Linked**: Prevents service interruption from SMS quota limits.
-- [ ] **All 3 Apps Registered in Same Project**: `com.tech2place.student`, `com.tech2place.client`, and `com.tech2place.admin`.
+- [ ] **All 3 Apps Registered in Same Project**: `com.gotechplace.student`, `com.gotechplace.client`, and `com.gotechplace.admin`.
 - [ ] **Release SHA-1 and SHA-256 Certificates Added**: Ensure both Google Play App Signing key and upload key fingerprints are added to Firebase Console under each app.
 - [ ] **`google-services.json` Placed in App Directories**: Downloaded fresh after adding fingerprints and saved to `app/google-services.json` in all three projects.
 - [ ] **Firestore Rules Deployed**: Verify `firebase deploy --only firestore:rules` completed without syntax errors.

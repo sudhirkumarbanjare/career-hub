@@ -9,5 +9,5 @@ pluginManagement {
 
 plugins { id("com.facebook.react.settings") }
 
-rootProject.name = 'TECH2PLACE_Student'
+rootProject.name = 'GoTechPlace_Student'
 include ':app'

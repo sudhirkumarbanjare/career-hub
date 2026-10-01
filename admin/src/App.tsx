@@ -15,7 +15,7 @@ import {
   User,
   Modal,
   Badge,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { AdminService } from './services/adminService';
 import { AdminPhoneLoginScreen } from './screens/auth/AdminPhoneLoginScreen';
 import { AdminOtpScreen } from './screens/auth/AdminOtpScreen';

@@ -16,7 +16,7 @@ import {
   Card,
   formatRelativeTime,
   AppNotification,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { ClientService } from '../../services/clientService';
 
 export interface ClientNotificationsScreenProps {

@@ -1,4 +1,4 @@
-import { Project, Course, Job } from '@tech2place/shared';
+import { Project, Course, Job } from '@gotechplace/shared';
 
 export const INITIAL_PROJECTS: Project[] = [
   {

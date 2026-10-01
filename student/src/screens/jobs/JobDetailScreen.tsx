@@ -17,7 +17,7 @@ import {
   Button,
   Modal,
   formatCurrency,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { StudentService } from '../../services/studentService';
 
 export interface JobDetailScreenProps {
@@ -89,7 +89,7 @@ export const JobDetailScreen: React.FC<JobDetailScreenProps> = ({
             </View>
             <View style={{ flex: 1 }}>
               <View style={styles.verifiedRow}>
-                <Text style={styles.clientName}>{job.clientName || 'Tech2Place Client'}</Text>
+                <Text style={styles.clientName}>{job.clientName || 'GoTechPlace Client'}</Text>
                 <Text style={styles.verifiedBadge}>✓ Verified Client</Text>
               </View>
               <Text style={styles.metaLocation}>

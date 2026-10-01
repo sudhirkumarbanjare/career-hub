@@ -20,7 +20,7 @@ import {
   DEFAULT_ROLE_CONFIGS,
   DEFAULT_APP_VERSIONS,
   DEFAULT_CATEGORIES,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 
 class AdminServiceManager {
   // 1. Current logged-in admin user
@@ -215,7 +215,7 @@ class AdminServiceManager {
       uid: 'staff_mod_01',
       name: 'Aditi Rao',
       phoneNumber: '+91 98700 11223',
-      email: 'aditi.moderator@tech2place.com',
+      email: 'aditi.moderator@gotechplace.com',
       role: 'moderator',
       permissions: ['jobs.view', 'jobs.approve', 'jobs.reject', 'reports.view', 'reports.manage'],
       status: 'active',
@@ -260,7 +260,7 @@ class AdminServiceManager {
       body: 'Apex Dynamics Ltd completed employer KYC. Awaiting business review and approval.',
       read: false,
       createdAt: new Date(Date.now() - 3600000 * 1).toISOString(),
-      deepLink: 'tech2place://admin/clientApprovals',
+      deepLink: 'gotechplace://admin/clientApprovals',
     },
     {
       id: 'anotif-2',
@@ -269,7 +269,7 @@ class AdminServiceManager {
       body: 'Nexus Innovations Ltd submitted "AI Computer Vision Pipeline Engineer" for moderation.',
       read: false,
       createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-      deepLink: 'tech2place://admin/jobApprovals',
+      deepLink: 'gotechplace://admin/jobApprovals',
     },
     {
       id: 'anotif-3',
@@ -331,8 +331,8 @@ class AdminServiceManager {
   // 10. System Settings
   private settings: SystemSettings = {
     id: 'settings_global',
-    platformName: 'TECH2PLACE',
-    supportEmail: 'support@tech2place.com',
+    platformName: 'GoTechPlace',
+    supportEmail: 'support@gotechplace.com',
     supportPhone: '+91 800 123 4567',
     allowClientRegistration: true,
     allowStudentRegistration: true,
@@ -341,7 +341,7 @@ class AdminServiceManager {
     maxAttachmentsPerJob: 5,
     maxAttachmentSizeMb: 10,
     maintenanceModeAll: false,
-    maintenanceMessage: 'TECH2PLACE ecosystem is currently undergoing scheduled platform upgrades.',
+    maintenanceMessage: 'GoTechPlace ecosystem is currently undergoing scheduled platform upgrades.',
     updatedAt: new Date().toISOString(),
     updatedBy: 'superuser',
   };

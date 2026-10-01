@@ -16,7 +16,7 @@ import {
   Badge,
   Tabs,
   Button,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
 export interface AdminDashboardScreenProps {

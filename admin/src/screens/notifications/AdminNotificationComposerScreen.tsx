@@ -19,7 +19,7 @@ import {
   NotificationCampaign,
   NotificationTarget,
   formatRelativeDate,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
 interface AdminNotificationComposerScreenProps {
@@ -62,7 +62,7 @@ export const AdminNotificationComposerScreen: React.FC<AdminNotificationComposer
         ? 'All Registered Clients'
         : target === 'admin_app'
         ? 'All Admin Personnel'
-        : 'Entire TECH2PLACE Ecosystem';
+        : 'Entire GoTechPlace Ecosystem';
 
     Alert.alert(
       'Confirm Broadcast',
@@ -156,7 +156,7 @@ export const AdminNotificationComposerScreen: React.FC<AdminNotificationComposer
             style={styles.input}
             value={deepLink}
             onChangeText={setDeepLink}
-            placeholder="tech2place://student/jobs/job-101"
+            placeholder="gotechplace://student/jobs/job-101"
             autoCapitalize="none"
           />
 
@@ -165,7 +165,7 @@ export const AdminNotificationComposerScreen: React.FC<AdminNotificationComposer
             style={styles.input}
             value={imageUrl}
             onChangeText={setImageUrl}
-            placeholder="https://assets.tech2place.com/banners/announcement.png"
+            placeholder="https://assets.gotechplace.com/banners/announcement.png"
             autoCapitalize="none"
           />
 

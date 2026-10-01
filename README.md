@@ -1,19 +1,20 @@
-# TECH2PLACE — Complete React Native Android Ecosystem
+# GoTechPlace — Complete Mobile Apps & Web Platform Ecosystem
 
-TECH2PLACE is a unified, production-ready React Native Android ecosystem connecting engineering students, industrial employers/clients, and platform administrators through a single monorepo backed by Google Firebase.
+**GoTechPlace** ([gotechplace.com](https://gotechplace.com)) is a unified, production-ready full-stack platform and React Native Android ecosystem connecting engineering students, industrial employers/clients, and platform administrators through a single monorepo backed by Google Firebase.
 
 ---
 
-## 📱 Ecosystem Architecture
+## 🌐 Ecosystem Architecture
 
-The ecosystem consists of three dedicated native Android applications sharing a centralized TypeScript library and Firebase infrastructure:
+The repository contains the deployed web portal, three dedicated native Android applications, a centralized shared TypeScript library, and production Firebase infrastructure:
 
 ```text
-tech2place/
-├── student/             # Student Mobile Application (com.tech2place.student)
-├── client/              # Client / Employer Application (com.tech2place.client)
-├── admin/               # Administrative Management Console (com.tech2place.admin)
-├── shared/              # Centralized Models, Utilities, Theme, RBAC, Services & UI
+gotechplace/
+├── website/             # Web Portal & CMS (React + Vite + Tailwind, gotechplace.com)
+├── student/             # Student Mobile Application (com.gotechplace.student)
+├── client/              # Client / Employer Application (com.gotechplace.client)
+├── admin/               # Administrative Management Console (com.gotechplace.admin)
+├── shared/              # Centralized Models, Utilities, Theme, RBAC, Services & UI (@gotechplace/shared)
 ├── firebase/            # Production Firestore Rules, Storage Rules, Indexes & Cloud Functions
 ├── tests/               # Automated Unit & Integration Test Suites
 └── package.json         # Monorepo Workspace Configuration
@@ -23,7 +24,12 @@ tech2place/
 
 ## 🌟 Applications Breakdown
 
-### 1. Student App (`com.tech2place.student`)
+### 1. Web Portal & CMS (`website/`, `https://gotechplace.com`)
+* **Landing & Showcase**: Discovery platform for engineering students, project listings, upskilling courses, and career opportunities.
+* **Content Management System (CMS)**: Interactive administration for academic projects, job listings, and staff operations.
+* **Tech Stack**: React 18, Vite, Tailwind CSS, Firebase Client SDK, Netlify Functions.
+
+### 2. Student Mobile App (`student/`, `com.gotechplace.student`)
 * **Authentication**: Firebase Phone OTP login, new student onboarding, profile management.
 * **Academic Projects**: Minor and Major academic projects marketplace with branch filters, search, and reservation/booking flow.
 * **Approved Client Jobs**: Searchable marketplace of verified client jobs and internships with stipend ranges, skill tags, and location.
@@ -31,14 +37,14 @@ tech2place/
 * **Courses & Upskilling**: Curated technical courses with module tracking and enrollment.
 * **System Guards**: Remote force update detection and maintenance mode screen.
 
-### 2. Client / Employer App (`com.tech2place.client`)
+### 3. Client / Employer App (`client/`, `com.gotechplace.client`)
 * **Authentication**: Phone OTP authentication with business profile registration.
 * **Verification Gate**: Mandatory Admin approval requirement (`pending_approval` state blocks job posting until platform review).
 * **Job Management**: Create job postings with titles, budgets, skill tags, deadlines, attachments, and remote status.
 * **Applicant Review**: Review applicants per job, download student resumes, update candidate application stages.
 * **Company Profile**: Public branding and recruiter contact coordinates.
 
-### 3. Admin Console (`com.tech2place.admin`)
+### 4. Admin Console App (`admin/`, `com.gotechplace.admin`)
 * **Executive Dashboard**: Platform analytics, registration rates, active/pending job counters.
 * **Client Approvals**: Review employer verification submissions; approve or reject with mandatory feedback.
 * **Job Approvals**: Moderate incoming client jobs before they appear in the student marketplace.
@@ -60,7 +66,7 @@ tech2place/
 ### Installation
 ```bash
 # Clone and checkout development branch
-git checkout tech2place-react-native
+git checkout gotechplace-ecosystem
 
 # Install workspace dependencies
 npm install
@@ -77,27 +83,33 @@ Runs 27 automated unit and integration tests covering:
 * Client job approval and student visibility lifecycle
 * Phone OTP normalization and account status gating
 
+### Running the Web Portal
+```bash
+npm run website:dev     # Starts local Vite development server
+npm run website:build   # Produces production-optimized web bundle
+```
+
 ### Running Mobile Applications
 
 #### Run Student App:
 ```bash
 npm run student:start
 # In a separate terminal or emulator:
-cd student && npx react-native run-android
+npm run student:android
 ```
 
 #### Run Client App:
 ```bash
 npm run client:start
 # In a separate terminal or emulator:
-cd client && npx react-native run-android
+npm run client:android
 ```
 
 #### Run Admin App:
 ```bash
 npm run admin:start
 # In a separate terminal or emulator:
-cd admin && npx react-native run-android
+npm run admin:android
 ```
 
 ---

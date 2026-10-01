@@ -1,13 +1,13 @@
-# TECH2PLACE Administrator Manual
+# GoTechPlace Administrator Manual
 
-This guide provides step-by-step instructions for operators, moderators, and system administrators managing the TECH2PLACE ecosystem.
+This guide provides step-by-step instructions for operators, moderators, and system administrators managing the GoTechPlace ecosystem.
 
 ---
 
 ## 1. Accessing the Admin Console
 
 The administrative console is protected by multi-layered security gates:
-* Accessible via the dedicated native application: `com.tech2place.admin`.
+* Accessible via the dedicated native application: `com.gotechplace.admin`.
 * Only accounts with roles `moderator`, `admin`, or `superuser` can authenticate.
 * Standard student and client phone numbers are automatically rejected at the OTP verification gate.
 
@@ -72,7 +72,7 @@ All job postings submitted by approved clients enter the moderation queue before
    * `Clients Only`: Invoicing or candidate pipeline updates.
    * `Staff / Admins`: Internal moderation notices.
 3. Enter **Notification Title** and **Message Body**.
-4. (Optional) Provide a deep link URI (e.g., `tech2place://student/jobs/job-101`) to direct recipients to a specific screen upon tapping the notification.
+4. (Optional) Provide a deep link URI (e.g., `gotechplace://student/jobs/job-101`) to direct recipients to a specific screen upon tapping the notification.
 5. Tap **Dispatch Notification**. The broadcast is executed via Firebase Cloud Messaging (FCM).
 
 ---

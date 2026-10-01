@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Linking } from 'react-native';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY, Button } from '@tech2place/shared';
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY, Button } from '@gotechplace/shared';
 
 export interface ForceUpdateScreenProps {
   title?: string;
@@ -10,8 +10,8 @@ export interface ForceUpdateScreenProps {
 
 export const ForceUpdateScreen: React.FC<ForceUpdateScreenProps> = ({
   title = 'New Version Required',
-  message = 'A new critical version of TECH2PLACE is required to continue using the application securely.',
-  storeUrl = 'https://play.google.com/store/apps/details?id=com.tech2place.student',
+  message = 'A new critical version of GoTechPlace is required to continue using the application securely.',
+  storeUrl = 'https://play.google.com/store/apps/details?id=com.gotechplace.student',
 }) => {
   const handleUpdate = () => {
     if (storeUrl) {

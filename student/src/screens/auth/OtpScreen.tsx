@@ -16,7 +16,7 @@ import {
   Input,
   AuthService,
   User,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 
 export interface OtpScreenProps {
   verificationId: string;

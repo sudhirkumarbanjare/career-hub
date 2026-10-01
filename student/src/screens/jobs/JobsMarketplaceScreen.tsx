@@ -19,7 +19,7 @@ import {
   DEFAULT_CATEGORIES,
   formatCurrency,
   Job,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { StudentService } from '../../services/studentService';
 
 export interface JobsMarketplaceScreenProps {

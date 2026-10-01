@@ -1,16 +1,16 @@
-# TECH2PLACE Developer Guide
+# GoTechPlace Developer Guide
 
-This guide describes development patterns, monorepo conventions, testing workflows, and best practices for engineers contributing to the TECH2PLACE ecosystem.
+This guide describes development patterns, monorepo conventions, testing workflows, and best practices for engineers contributing to the GoTechPlace ecosystem.
 
 ---
 
 ## 1. Branching & Git Workflow
 
-* **Primary Feature Branch**: All work for the React Native ecosystem must be committed directly to `tech2place-react-native`.
+* **Primary Feature Branch**: All work for the React Native ecosystem must be committed directly to `gotechplace-ecosystem`.
 * **Branch Verification**: Always confirm your active branch before committing:
   ```bash
   git branch --show-current
-  # Expected: tech2place-react-native
+  # Expected: gotechplace-ecosystem
   ```
 * **Clean Commits**: Write descriptive commit messages summarizing the module affected (e.g. `feat(student): add minor project booking confirmation dialog`).
 
@@ -27,7 +27,7 @@ This guide describes development patterns, monorepo conventions, testing workflo
 
 ### 2.2 Adding a New Screen
 1. Create screen component inside `{app}/src/screens/{feature}/{ScreenName}.tsx`.
-2. Use components and theme tokens imported from `@tech2place/shared`:
+2. Use components and theme tokens imported from `@gotechplace/shared`:
    ```typescript
    import {
      COLORS,
@@ -36,7 +36,7 @@ This guide describes development patterns, monorepo conventions, testing workflo
      Header,
      Card,
      Button,
-   } from '@tech2place/shared';
+   } from '@gotechplace/shared';
    ```
 3. Register the screen in `{app}/src/App.tsx` within the appropriate navigation tab or stack.
 

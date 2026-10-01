@@ -15,9 +15,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.tech2place.client"
+    namespace "com.gotechplace.client"
     defaultConfig {
-        applicationId "com.tech2place.client"
+        applicationId "com.gotechplace.client"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

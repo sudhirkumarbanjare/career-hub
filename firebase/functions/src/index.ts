@@ -51,8 +51,8 @@ export const onJobStatusChanged = functions.firestore
       const clientNotification = {
         userId: after.clientId,
         title: '🎉 Job Approved!',
-        body: `Your job posting "${after.title}" has been approved and is now live on TECH2PLACE.`,
-        deepLink: `tech2place://client/jobs/${jobId}`,
+        body: `Your job posting "${after.title}" has been approved and is now live on GoTechPlace.`,
+        deepLink: `gotechplace://client/jobs/${jobId}`,
         read: false,
         createdAt: new Date().toISOString(),
       };
@@ -84,10 +84,10 @@ export const onJobStatusChanged = functions.firestore
         topic: 'student_app',
         notification: {
           title: '💼 New Job Opening Available!',
-          body: `${after.title} (${after.category}) - Apply now on TECH2PLACE`,
+          body: `${after.title} (${after.category}) - Apply now on GoTechPlace`,
         },
         data: {
-          deepLink: `tech2place://student/job/${jobId}`,
+          deepLink: `gotechplace://student/job/${jobId}`,
         },
       });
 
@@ -109,7 +109,7 @@ export const onJobStatusChanged = functions.firestore
         userId: after.clientId,
         title: '⚠️ Job Posting Needs Revision',
         body: `Your job "${after.title}" was not approved. Reason: ${after.rejectionReason || 'Requires updates'}`,
-        deepLink: `tech2place://client/jobs/${jobId}`,
+        deepLink: `gotechplace://client/jobs/${jobId}`,
         read: false,
         createdAt: new Date().toISOString(),
       };
@@ -139,8 +139,8 @@ export const onClientApproved = functions.firestore
       const notif = {
         userId: clientId,
         title: '🎊 Client Account Approved!',
-        body: 'Welcome to TECH2PLACE! Your company profile is verified and you can now post jobs.',
-        deepLink: 'tech2place://client/create-job',
+        body: 'Welcome to GoTechPlace! Your company profile is verified and you can now post jobs.',
+        deepLink: 'gotechplace://client/create-job',
         read: false,
         createdAt: new Date().toISOString(),
       };

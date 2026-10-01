@@ -13,7 +13,7 @@ import {
   Card,
   Button,
   ClientProfile,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 
 export interface PendingApprovalScreenProps {
   client: ClientProfile;
@@ -41,7 +41,7 @@ export const PendingApprovalScreen: React.FC<PendingApprovalScreenProps> = ({
       <Text style={styles.subtitle}>
         {isRejected
           ? `Your client application was not approved: ${client.rejectionReason || 'Please review your business details'}.`
-          : 'Thank you for registering your company on TECH2PLACE. To ensure high-quality opportunities for our students, all new clients are manually reviewed by our compliance team within 24 hours.'}
+          : 'Thank you for registering your company on GoTechPlace. To ensure high-quality opportunities for our students, all new clients are manually reviewed by our compliance team within 24 hours.'}
       </Text>
 
       <Card style={styles.detailsCard}>

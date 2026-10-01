@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "paths": {
-      "@tech2place/shared": ["../shared/index.ts"]
+      "@gotechplace/shared": ["../shared/index.ts"]
     }
   },
   "include": ["src/**/*"]

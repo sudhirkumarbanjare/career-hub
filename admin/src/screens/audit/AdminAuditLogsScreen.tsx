@@ -17,7 +17,7 @@ import {
   EmptyState,
   AuditLogEntry,
   formatRelativeDate,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
 interface AdminAuditLogsScreenProps {

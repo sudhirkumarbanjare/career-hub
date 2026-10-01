@@ -8,7 +8,7 @@ import {
   StudentProfile,
   AppNotification,
   User,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 import {
   INITIAL_PROJECTS,
   INITIAL_COURSES,
@@ -26,7 +26,7 @@ class StudentServiceManager {
     {
       id: 'notif-1',
       userId: 'usr_student',
-      title: 'Welcome to TECH2PLACE',
+      title: 'Welcome to GoTechPlace',
       body: 'Explore major & minor projects, enroll in industry courses, and apply to top client jobs.',
       read: true,
       createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
@@ -38,7 +38,7 @@ class StudentServiceManager {
       body: 'Nexus Innovations Ltd posted a new position matching your skills: React Native, TypeScript & Firebase.',
       read: false,
       createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
-      deepLink: 'tech2place://student/job/job-c1',
+      deepLink: 'gotechplace://student/job/job-c1',
     },
     {
       id: 'notif-3',
@@ -267,7 +267,7 @@ class StudentServiceManager {
       jobId,
       jobTitle: job.title,
       clientId: job.clientId,
-      companyName: job.clientName || 'Tech2Place Client',
+      companyName: job.clientName || 'GoTechPlace Client',
       studentId: student.uid,
       studentName: student.name,
       studentPhone: student.mobile,

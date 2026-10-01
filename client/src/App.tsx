@@ -16,7 +16,7 @@ import {
   ClientProfile,
   VersionCheckService,
   VersionCheckResult,
-} from '@tech2place/shared';
+} from '@gotechplace/shared';
 
 import { ClientService } from './services/clientService';
 import { ClientPhoneLoginScreen } from './screens/auth/ClientPhoneLoginScreen';
