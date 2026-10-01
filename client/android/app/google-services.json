@@ -1,26 +1,94 @@
 {
   "project_info": {
-    "project_number": "109876543210",
-    "project_id": "gotechplace-prod",
-    "storage_bucket": "gotechplace-prod.appspot.com"
+    "project_number": "227037159117",
+    "project_id": "gotechplace-e91bc",
+    "storage_bucket": "gotechplace-e91bc.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:109876543210:android:client1234567890",
+        "mobilesdk_app_id": "1:227037159117:android:4afff3072777c9f5125384",
         "android_client_info": {
-          "package_name": "com.gotechplace.client"
+          "package_name": "com.gotechplace.admin"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "227037159117-rh7bmir2i9v1mb0lle0i20mngv5dmtqa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyFakeKeyForDevelopmentOnlyClient123"
+          "current_key": "AIzaSyB9sXf8jhGdzv803ZY4HAQlEhnGfLAobkE"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "227037159117-rh7bmir2i9v1mb0lle0i20mngv5dmtqa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:227037159117:android:7c73eae1d4acd824125384",
+        "android_client_info": {
+          "package_name": "com.gotechplace.client"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "227037159117-rh7bmir2i9v1mb0lle0i20mngv5dmtqa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9sXf8jhGdzv803ZY4HAQlEhnGfLAobkE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "227037159117-rh7bmir2i9v1mb0lle0i20mngv5dmtqa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:227037159117:android:893551bf4a9d39aa125384",
+        "android_client_info": {
+          "package_name": "com.gotechplace.student"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "227037159117-rh7bmir2i9v1mb0lle0i20mngv5dmtqa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9sXf8jhGdzv803ZY4HAQlEhnGfLAobkE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "227037159117-rh7bmir2i9v1mb0lle0i20mngv5dmtqa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

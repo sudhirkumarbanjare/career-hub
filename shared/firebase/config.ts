@@ -13,11 +13,12 @@ export interface FirebaseConfig {
 export const getFirebaseConfig = (): FirebaseConfig => {
   const env = typeof process !== 'undefined' ? process.env || {} : {};
   return {
-    apiKey: env.FIREBASE_API_KEY || env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDemoKeyGoTechPlace2026SecureProd',
-    authDomain: env.FIREBASE_AUTH_DOMAIN || 'gotechplace-prod.firebaseapp.com',
-    projectId: env.FIREBASE_PROJECT_ID || 'gotechplace-prod',
-    storageBucket: env.FIREBASE_STORAGE_BUCKET || 'gotechplace-prod.appspot.com',
-    messagingSenderId: env.FIREBASE_MESSAGING_SENDER_ID || '102938475610',
-    appId: env.FIREBASE_APP_ID || '1:102938475610:android:abcdef0123456789',
+    apiKey: env.FIREBASE_API_KEY || env.EXPO_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDbdgblttxxeiuGjd4Lk-aAcEF1HCo86_4',
+    authDomain: env.FIREBASE_AUTH_DOMAIN || 'gotechplace-e91bc.firebaseapp.com',
+    projectId: env.FIREBASE_PROJECT_ID || 'gotechplace-e91bc',
+    storageBucket: env.FIREBASE_STORAGE_BUCKET || 'gotechplace-e91bc.firebasestorage.app',
+    messagingSenderId: env.FIREBASE_MESSAGING_SENDER_ID || '227037159117',
+    appId: env.FIREBASE_APP_ID || '1:227037159117:android:893551bf4a9d39aa125384',
+    measurementId: 'G-ET7T167RGN',
   };
 };
