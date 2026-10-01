@@ -33,6 +33,7 @@ export interface Student {
   year: string;
   semester: string;
   profile_image: string;
+  role?: 'admin' | 'user';
   created_at: string;
   updated_at: string;
 }
@@ -46,7 +47,8 @@ export interface Project {
   technologies: string[];
   difficulty: Difficulty;
   duration: string;
-  cost: number;
+  original_cost: number;
+  discounted_cost: number;
   availability: Availability;
   capacity: number;
   image?: string;

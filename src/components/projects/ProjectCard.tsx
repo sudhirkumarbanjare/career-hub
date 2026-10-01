@@ -10,18 +10,25 @@ import { useNavigate } from 'react-router-dom';
 export interface ProjectCardProps {
   project: Project;
   onBookClick?: (project: Project) => void;
+  isBooked?: boolean;
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({ project, isBooked }) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
     navigate(`/projects/${project.project_id}`);
   };
 
+  const originalPrice = project.original_cost || 0;
+  const discountedPrice = project.discounted_cost || 0;
+
   return (
-    <Card hoverable onClick={handleCardClick} className="flex flex-col justify-between h-full group">
-      <div>
+    <Card hoverable onClick={handleCardClick} className="flex flex-col justify-between h-full group relative overflow-hidden">
+      <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg shadow-sm z-10 flex items-center gap-1">
+        <span className="animate-pulse w-1.5 h-1.5 bg-white rounded-full"></span> LIMITED TIME OFFER
+      </div>
+      <div className="pt-2">
         {/* Badges Bar */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <Badge variant={project.project_type === 'Major' ? 'brand' : 'accent'} size="sm">
@@ -71,20 +78,26 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Estimated Cost</span>
-            <span className="text-lg font-extrabold text-brand-700">{formatCurrency(project.cost)}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-gray-400 line-through">{formatCurrency(originalPrice)}</span>
+              <span className="text-lg font-extrabold text-emerald-600">{formatCurrency(discountedPrice)}</span>
+            </div>
           </div>
 
           <Button
-            variant="outline"
+            variant={isBooked ? 'outline' : 'outline'}
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/projects/${project.project_id}`);
             }}
-            icon={<ArrowRight className="w-3.5 h-3.5" />}
-            className="group-hover:bg-brand-600 group-hover:text-white group-hover:border-brand-600 transition-colors"
+            icon={!isBooked && <ArrowRight className="w-3.5 h-3.5" />}
+            className={isBooked 
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 font-bold" 
+              : "group-hover:bg-brand-600 group-hover:text-white group-hover:border-brand-600 transition-colors"
+            }
           >
-            View Project
+            {isBooked ? 'Already Booked' : 'View Project'}
           </Button>
         </div>
       </div>

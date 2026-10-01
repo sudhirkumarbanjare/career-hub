@@ -12,8 +12,14 @@ import { CourseCard } from '../components/courses/CourseCard';
 import { DashboardSkeleton } from '../components/common/LoadingSkeleton';
 import { calculateProfileCompletion, formatCurrency } from '../utils/formatters';
 import { Layers, Briefcase, User, ArrowRight, Sparkles, Clock, GraduationCap, BookOpen, CheckCircle2 } from 'lucide-react';
+import { useSEO } from '../hooks/useSEO';
 
 export const DashboardPage: React.FC = () => {
+  useSEO({
+    title: 'Student Dashboard',
+    description: 'Track your career journey, view enrolled courses, and manage booked projects.'
+  });
+
   const navigate = useNavigate();
   const { student, user } = useAuth();
   const [recommendedProjects, setRecommendedProjects] = useState<Project[]>([]);
@@ -183,6 +189,41 @@ export const DashboardPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Booked Projects Section */}
+      {studentBookings.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-gray-900">Your Booked Projects</h2>
+            <Link to="/projects" className="text-xs font-bold text-brand-600 hover:text-brand-700">
+              Browse More Projects
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {studentBookings.map((booking) => (
+              <Card key={booking.booking_id} className="p-5 border-brand-200 bg-brand-50/20">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <Badge variant="success" size="sm" className="mb-2">
+                      {booking.status}
+                    </Badge>
+                    <h3 className="text-base font-bold text-gray-900">{booking.project?.title || 'Academic Project'}</h3>
+                    <p className="text-xs text-gray-600 mt-1 line-clamp-1">{booking.project?.branch}</p>
+                  </div>
+                  <span className="text-xs font-semibold text-brand-700 bg-brand-100 px-2.5 py-1 rounded-pill shrink-0">
+                    {booking.project?.project_type || 'Project'}
+                  </span>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-brand-100 flex items-center justify-between text-xs text-gray-600">
+                  <span>Difficulty: <strong className="text-brand-800">{booking.project?.difficulty || 'N/A'}</strong></span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Enrolled Courses Section */}
       {studentEnrollments.length > 0 && (
         <section>
@@ -261,7 +302,11 @@ export const DashboardPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {recommendedCourses.map((course) => (
-            <CourseCard key={course.course_id} course={course} />
+            <CourseCard 
+              key={course.course_id} 
+              course={course} 
+              isEnrolled={studentEnrollments.some(e => e.course_id === course.course_id)}
+            />
           ))}
         </div>
       </section>
@@ -285,7 +330,11 @@ export const DashboardPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {recommendedProjects.map((project) => (
-            <ProjectCard key={project.project_id} project={project} />
+            <ProjectCard 
+              key={project.project_id} 
+              project={project} 
+              isBooked={studentBookings.some(b => b.project_id === project.project_id)}
+            />
           ))}
         </div>
       </section>

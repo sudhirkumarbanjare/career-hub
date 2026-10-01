@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
@@ -10,52 +9,39 @@ import { ShieldCheck, CheckCircle2, Lock } from 'lucide-react';
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setGoogleAuthUser, loginWithGoogleMock, loading } = useAuth();
+  const { signInWithGoogle, loginWithGoogleMock, loading } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
-  const realGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setIsSigningIn(true);
-      try {
-        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        });
-        const profile = await res.json();
-        const realUser = {
-          google_id: profile.sub,
-          email: profile.email,
-          name: profile.name,
-          picture: profile.picture,
-        };
-        const existingStudent = await setGoogleAuthUser(realUser);
-        if (existingStudent) {
-          navigate((location.state as any)?.from?.pathname || '/dashboard', { replace: true });
-        } else {
-          navigate('/register', { replace: true });
-        }
-      } catch (err) {
-        console.error('Google Userinfo Fetch Failed:', err);
-      } finally {
-        setIsSigningIn(false);
-      }
-    },
-    onError: (err) => {
-      console.error('Google Sign In Error:', err);
-    },
-  });
+  const handleMainSignIn = async () => {
+    setIsSigningIn(true);
+    try {
+      const hasFirebaseConfig = Boolean(import.meta.env.VITE_FIREBASE_API_KEY);
+      let existingStudent;
 
-  const handleMainSignIn = () => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (clientId && !clientId.includes('placeholder')) {
-      realGoogleLogin();
-    } else {
-      handleDemoSignIn('existing');
+      if (hasFirebaseConfig) {
+        // Real Firebase Google Sign-In popup
+        existingStudent = await signInWithGoogle();
+      } else {
+        // Dev fallback: mock existing user
+        existingStudent = await loginWithGoogleMock();
+      }
+
+      if (existingStudent) {
+        navigate((location.state as any)?.from?.pathname || '/dashboard', { replace: true });
+      } else {
+        navigate('/register', { replace: true });
+      }
+    } catch (err) {
+      console.error('Sign-in failed:', err);
+    } finally {
+      setIsSigningIn(false);
     }
   };
 
   const handleDemoSignIn = async (userPreset?: 'new' | 'existing') => {
     setIsSigningIn(true);
     try {
+      let existingStudent;
       if (userPreset === 'new') {
         const newGoogleUser = {
           google_id: `google-new-${Date.now()}`,
@@ -63,19 +49,15 @@ export const LoginPage: React.FC = () => {
           name: 'Aarav Mehta',
           picture: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&auto=format&fit=crop&q=80',
         };
-        const existingStudent = await loginWithGoogleMock(newGoogleUser);
-        if (existingStudent) {
-          navigate('/dashboard', { replace: true });
-        } else {
-          navigate('/register', { replace: true });
-        }
+        existingStudent = await loginWithGoogleMock(newGoogleUser);
       } else {
-        const existingStudent = await loginWithGoogleMock();
-        if (existingStudent) {
-          navigate('/dashboard', { replace: true });
-        } else {
-          navigate('/register', { replace: true });
-        }
+        existingStudent = await loginWithGoogleMock();
+      }
+
+      if (existingStudent) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/register', { replace: true });
       }
     } catch (err) {
       console.error('Sign-in failed:', err);
@@ -132,48 +114,10 @@ export const LoginPage: React.FC = () => {
               Sign in with Google
             </Button>
 
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-3 text-gray-400 font-medium">Demo Quick Sign-In</span>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoSignIn('existing')}
-                disabled={isSigningIn || loading}
-                className="text-xs"
-              >
-                Existing Student
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDemoSignIn('new')}
-                disabled={isSigningIn || loading}
-                className="text-xs"
-              >
-                New Student Register
-              </Button>
-            </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col gap-2.5 text-xs text-gray-500">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Identity verified safely via Google OAuth</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-brand-600 shrink-0" />
-              <span>No password storage required</span>
-            </div>
-          </div>
+
         </Card>
       </div>
     </div>
