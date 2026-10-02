@@ -7,14 +7,25 @@ export interface ParsedDeepLink {
 export function parseDeepLink(url: string): ParsedDeepLink | null {
   try {
     if (!url) return null;
-    const cleanUrl = url.replace('gotechplace://', '').replace('tech2place://', '');
+    let cleanUrl = url
+      .replace(/^https?:\/\/(www\.)?gotechplace\.com\//i, '')
+      .replace(/^https?:\/\/(www\.)?tech2place\.com\//i, '')
+      .replace(/^gotechplace:\/\//i, '')
+      .replace(/^tech2place:\/\//i, '');
+
     const [pathPart, queryPart] = cleanUrl.split('?');
     const segments = pathPart.split('/').filter(Boolean);
 
     if (segments.length === 0) return null;
 
-    const appSegment = segments[0] as 'student' | 'client' | 'admin';
-    const screenSegment = segments[1] || 'home';
+    let appSegment = segments[0].toLowerCase() as 'student' | 'client' | 'admin';
+    let screenSegment = (segments[1] || 'home').toLowerCase();
+
+    // If first segment is a known screen rather than app name (e.g. gotechplace://job/101)
+    if (!['student', 'client', 'admin'].includes(appSegment)) {
+      screenSegment = appSegment;
+      appSegment = 'student';
+    }
 
     const params: Record<string, string> = {};
 

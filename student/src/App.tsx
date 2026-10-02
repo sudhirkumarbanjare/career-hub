@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -9,6 +9,7 @@ import {
   Linking,
   AppState,
   AppStateStatus,
+  BackHandler,
 } from 'react-native';
 import {
   COLORS,
@@ -20,6 +21,10 @@ import {
   VersionCheckResult,
   DeviceService,
   AnalyticsService,
+  NavigationScreen,
+  handleRootBackPress,
+  parseDeepLink,
+  NotificationService,
 } from '@gotechplace/shared';
 
 import { StudentService } from './services/studentService';
@@ -50,11 +55,140 @@ export const StudentApp: React.FC = () => {
   const [isRegistered, setIsRegistered] = useState(false);
   const [otpSession, setOtpSession] = useState<{ verificationId: string; phone: string } | null>(null);
 
-  // 3. Navigation state
+  // 3. Navigation state - Multi-level Stack and Tab
   const [activeTab, setActiveTab] = useState<'home' | 'projects' | 'jobs' | 'courses' | 'profile'>('home');
-  const [stackScreen, setStackScreen] = useState<{ name: string; params?: any } | null>(null);
+  const [navigationStack, setNavigationStack] = useState<NavigationScreen[]>([]);
+  const [, setNotificationVersion] = useState(0);
 
-  // Run startup version & maintenance check & device registration
+  // Stack navigation helpers
+  const pushScreen = useCallback((name: string, params?: any) => {
+    setNavigationStack((prev) => [...prev, { name, params }]);
+  }, []);
+
+  const popScreen = useCallback(() => {
+    setNavigationStack((prev) => (prev.length > 0 ? prev.slice(0, -1) : prev));
+  }, []);
+
+  const clearStack = useCallback(() => {
+    setNavigationStack([]);
+  }, []);
+
+  const currentStackScreen = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
+
+  // Complete Deep Link Navigation Handler
+  const handleDeepLinkUrl = useCallback((url: string) => {
+    const parsed = parseDeepLink(url);
+    if (!parsed) return;
+    if (parsed.app !== 'student' && parsed.app !== 'admin') {
+      // allow student deep links
+    }
+
+    const { screen, params } = parsed;
+    switch (screen.toLowerCase()) {
+      case 'job':
+      case 'jobs':
+        if (params?.id) {
+          clearStack();
+          setActiveTab('jobs');
+          pushScreen('job-detail', { id: params.id });
+        } else {
+          clearStack();
+          setActiveTab('jobs');
+        }
+        break;
+      case 'applications':
+      case 'my-applications':
+        clearStack();
+        setActiveTab('jobs');
+        pushScreen('my-applications');
+        break;
+      case 'project':
+      case 'projects':
+        if (params?.id) {
+          clearStack();
+          setActiveTab('projects');
+          pushScreen('project-detail', { id: params.id });
+        } else {
+          clearStack();
+          setActiveTab('projects');
+        }
+        break;
+      case 'project-booking':
+        if (params?.id) {
+          clearStack();
+          setActiveTab('projects');
+          pushScreen('project-booking', { id: params.id });
+        }
+        break;
+      case 'course':
+      case 'courses':
+        if (params?.id) {
+          clearStack();
+          setActiveTab('courses');
+          pushScreen('course-detail', { id: params.id });
+        } else {
+          clearStack();
+          setActiveTab('courses');
+        }
+        break;
+      case 'notification':
+      case 'notifications':
+        clearStack();
+        pushScreen('notifications');
+        break;
+      case 'profile':
+        clearStack();
+        setActiveTab('profile');
+        break;
+      case 'home':
+      case 'dashboard':
+      default:
+        clearStack();
+        setActiveTab('home');
+        break;
+    }
+  }, [clearStack, pushScreen]);
+
+  // Centralized Android BackHandler (Hardware Back & Gesture Edge-Swipe Back)
+  useEffect(() => {
+    const onHardwareBackPress = (): boolean => {
+      // 1. Auth Flow: If on OTP screen, go back to Phone Login
+      if (!user) {
+        if (otpSession) {
+          setOtpSession(null);
+          return true; // Handled, return to phone login
+        }
+        return false; // Exit app on root login screen
+      }
+
+      // 2. Onboarding Registration Gate
+      if (!isRegistered) {
+        return false; // Let root back press handle or exit
+      }
+
+      // 3. Navigation Stack: If inside detail/sub-screen, unwind stack
+      if (navigationStack.length > 0) {
+        popScreen();
+        return true;
+      }
+
+      // 4. Secondary Tab: If on projects/jobs/courses/profile, return to home tab
+      if (activeTab !== 'home') {
+        setActiveTab('home');
+        return true;
+      }
+
+      // 5. Root Tab (Home): Double-back to exit guard
+      return handleRootBackPress('Press back again to exit GoTechPlace Student');
+    };
+
+    const backSubscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
+    return () => {
+      backSubscription.remove();
+    };
+  }, [user, otpSession, isRegistered, navigationStack, activeTab, popScreen]);
+
+  // Run startup version & maintenance check & device registration & deep link listeners
   useEffect(() => {
     const config = VersionCheckService.getDefaultConfig('student');
     const result = VersionCheckService.evaluate('1.0.0', config);
@@ -68,6 +202,21 @@ export const StudentApp: React.FC = () => {
       role: 'student',
     });
 
+    // 1. Listen for real-time push notifications from Admin & Firebase
+    const notifUnsub = NotificationService.subscribe(() => {
+      setNotificationVersion((v) => v + 1);
+    });
+
+    // 2. Cold boot deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLinkUrl(url);
+    }).catch(() => {});
+
+    // 3. Runtime deep link events
+    const linkSub = Linking.addEventListener('url', (event) => {
+      if (event.url) handleDeepLinkUrl(event.url);
+    });
+
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
         DeviceService.recordAppForeground();
@@ -77,9 +226,11 @@ export const StudentApp: React.FC = () => {
     });
 
     return () => {
+      notifUnsub();
+      linkSub.remove();
       subscription.remove();
     };
-  }, []);
+  }, [handleDeepLinkUrl]);
 
   const handleLogout = () => {
     if (user) {
@@ -90,7 +241,7 @@ export const StudentApp: React.FC = () => {
     setOtpSession(null);
     setIsRegistered(false);
     setActiveTab('home');
-    setStackScreen(null);
+    clearStack();
   };
 
   // 1. Force Update blocking check
@@ -170,23 +321,23 @@ export const StudentApp: React.FC = () => {
   // 5. Main Authenticated App with Bottom Tabs & Stack Views
   const renderScreen = () => {
     // If a modal/stack screen is open
-    if (stackScreen) {
-      switch (stackScreen.name) {
+    if (currentStackScreen) {
+      switch (currentStackScreen.name) {
         case 'project-detail':
           return (
             <ProjectDetailScreen
-              projectId={stackScreen.params?.id}
-              onBack={() => setStackScreen(null)}
-              onBookNow={(id) => setStackScreen({ name: 'project-booking', params: { id } })}
+              projectId={currentStackScreen.params?.id}
+              onBack={popScreen}
+              onBookNow={(id) => pushScreen('project-booking', { id })}
             />
           );
         case 'project-booking':
           return (
             <ProjectBookingScreen
-              projectId={stackScreen.params?.id}
-              onBack={() => setStackScreen(null)}
+              projectId={currentStackScreen.params?.id}
+              onBack={popScreen}
               onBookingSuccess={() => {
-                setStackScreen(null);
+                clearStack();
                 setActiveTab('home');
               }}
             />
@@ -194,25 +345,25 @@ export const StudentApp: React.FC = () => {
         case 'job-detail':
           return (
             <JobDetailScreen
-              jobId={stackScreen.params?.id}
-              onBack={() => setStackScreen(null)}
-              onViewApplications={() => setStackScreen({ name: 'my-applications' })}
+              jobId={currentStackScreen.params?.id}
+              onBack={popScreen}
+              onViewApplications={() => pushScreen('my-applications')}
             />
           );
         case 'my-applications':
           return (
             <MyApplicationsScreen
-              onBack={() => setStackScreen(null)}
-              onSelectJob={(id) => setStackScreen({ name: 'job-detail', params: { id } })}
+              onBack={popScreen}
+              onSelectJob={(id) => pushScreen('job-detail', { id })}
             />
           );
         case 'course-detail':
           return (
             <CourseDetailScreen
-              courseId={stackScreen.params?.id}
-              onBack={() => setStackScreen(null)}
+              courseId={currentStackScreen.params?.id}
+              onBack={popScreen}
               onEnrolledSuccess={() => {
-                setStackScreen(null);
+                clearStack();
                 setActiveTab('home');
               }}
             />
@@ -220,7 +371,8 @@ export const StudentApp: React.FC = () => {
         case 'notifications':
           return (
             <NotificationsScreen
-              onBack={() => setStackScreen(null)}
+              onBack={popScreen}
+              onOpenNotification={handleDeepLinkUrl}
             />
           );
       }
@@ -233,9 +385,10 @@ export const StudentApp: React.FC = () => {
           <StudentDashboardScreen
             onNavigate={(screen, params) => {
               if (['projects', 'jobs', 'courses', 'profile'].includes(screen)) {
+                clearStack();
                 setActiveTab(screen as any);
               } else {
-                setStackScreen({ name: screen, params });
+                pushScreen(screen, params);
               }
             }}
           />
@@ -243,26 +396,26 @@ export const StudentApp: React.FC = () => {
       case 'projects':
         return (
           <ProjectsMarketplaceScreen
-            onSelectProject={(id) => setStackScreen({ name: 'project-detail', params: { id } })}
+            onSelectProject={(id) => pushScreen('project-detail', { id })}
           />
         );
       case 'jobs':
         return (
           <JobsMarketplaceScreen
-            onSelectJob={(id) => setStackScreen({ name: 'job-detail', params: { id } })}
-            onViewApplications={() => setStackScreen({ name: 'my-applications' })}
+            onSelectJob={(id) => pushScreen('job-detail', { id })}
+            onViewApplications={() => pushScreen('my-applications')}
           />
         );
       case 'courses':
         return (
           <CoursesScreen
-            onSelectCourse={(id) => setStackScreen({ name: 'course-detail', params: { id } })}
+            onSelectCourse={(id) => pushScreen('course-detail', { id })}
           />
         );
       case 'profile':
         return (
           <StudentProfileScreen
-            onNavigateToNotifications={() => setStackScreen({ name: 'notifications' })}
+            onNavigateToNotifications={() => pushScreen('notifications')}
             onLogout={handleLogout}
           />
         );
@@ -302,11 +455,14 @@ export const StudentApp: React.FC = () => {
       <View style={styles.screenContainer}>{renderScreen()}</View>
 
       {/* Persistent Bottom Tab Bar (hidden when stack screen is active) */}
-      {!stackScreen ? (
+      {!currentStackScreen ? (
         <View style={styles.tabBar}>
           <TouchableOpacity
             style={styles.tabButton}
-            onPress={() => setActiveTab('home')}
+            onPress={() => {
+              clearStack();
+              setActiveTab('home');
+            }}
           >
             <Text style={[styles.tabIcon, activeTab === 'home' && styles.activeTabIcon]}>🏠</Text>
             <Text style={[styles.tabLabel, activeTab === 'home' && styles.activeTabLabel]}>Home</Text>
@@ -314,7 +470,10 @@ export const StudentApp: React.FC = () => {
 
           <TouchableOpacity
             style={styles.tabButton}
-            onPress={() => setActiveTab('projects')}
+            onPress={() => {
+              clearStack();
+              setActiveTab('projects');
+            }}
           >
             <Text style={[styles.tabIcon, activeTab === 'projects' && styles.activeTabIcon]}>💡</Text>
             <Text style={[styles.tabLabel, activeTab === 'projects' && styles.activeTabLabel]}>Projects</Text>
@@ -322,7 +481,10 @@ export const StudentApp: React.FC = () => {
 
           <TouchableOpacity
             style={styles.tabButton}
-            onPress={() => setActiveTab('jobs')}
+            onPress={() => {
+              clearStack();
+              setActiveTab('jobs');
+            }}
           >
             <Text style={[styles.tabIcon, activeTab === 'jobs' && styles.activeTabIcon]}>💼</Text>
             <Text style={[styles.tabLabel, activeTab === 'jobs' && styles.activeTabLabel]}>Jobs</Text>
@@ -330,7 +492,10 @@ export const StudentApp: React.FC = () => {
 
           <TouchableOpacity
             style={styles.tabButton}
-            onPress={() => setActiveTab('courses')}
+            onPress={() => {
+              clearStack();
+              setActiveTab('courses');
+            }}
           >
             <Text style={[styles.tabIcon, activeTab === 'courses' && styles.activeTabIcon]}>📚</Text>
             <Text style={[styles.tabLabel, activeTab === 'courses' && styles.activeTabLabel]}>Courses</Text>
@@ -338,7 +503,10 @@ export const StudentApp: React.FC = () => {
 
           <TouchableOpacity
             style={styles.tabButton}
-            onPress={() => setActiveTab('profile')}
+            onPress={() => {
+              clearStack();
+              setActiveTab('profile');
+            }}
           >
             <Text style={[styles.tabIcon, activeTab === 'profile' && styles.activeTabIcon]}>👤</Text>
             <Text style={[styles.tabLabel, activeTab === 'profile' && styles.activeTabLabel]}>Profile</Text>

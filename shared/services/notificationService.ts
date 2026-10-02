@@ -17,6 +17,124 @@ class NotificationServiceManager {
   private deviceTokens: Map<string, DeviceToken[]> = new Map();
   private campaigns: NotificationCampaign[] = [];
   private templates: NotificationTemplate[] = [...DEFAULT_NOTIFICATION_TEMPLATES];
+  private listeners: Set<(notification: AppNotification) => void> = new Set();
+
+  constructor() {
+    this.seedDefaultNotifications();
+  }
+
+  private seedDefaultNotifications() {
+    const studentNotifs: AppNotification[] = [
+      {
+        id: 'notif-stu-1',
+        userId: 'usr_student',
+        title: 'Welcome to GoTechPlace',
+        body: 'Explore major & minor projects, enroll in industry courses, and apply to top client jobs.',
+        category: 'general',
+        read: true,
+        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        deepLink: 'gotechplace://student/dashboard',
+      },
+      {
+        id: 'notif-stu-2',
+        userId: 'usr_student',
+        title: 'New Job Match: React Native Engineer',
+        body: 'Nexus Innovations Ltd posted a new position matching your skills: React Native, TypeScript & Firebase.',
+        category: 'jobs',
+        read: false,
+        createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+        deepLink: 'gotechplace://student/jobs/job-01',
+      },
+      {
+        id: 'notif-stu-3',
+        userId: 'usr_student',
+        title: 'Course Enrollment Confirmed',
+        body: 'You have been enrolled in "Full-Stack Mobile Architecture". Your learning track is now live.',
+        category: 'courses',
+        read: false,
+        createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
+        deepLink: 'gotechplace://student/courses/course-01',
+      },
+    ];
+
+    const clientNotifs: AppNotification[] = [
+      {
+        id: 'notif-cli-1',
+        userId: 'usr_client_demo',
+        title: 'Welcome to GoTechPlace Employers',
+        body: 'Your account is active. Start posting jobs and recruiting pre-screened engineering students.',
+        category: 'general',
+        read: true,
+        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+        deepLink: 'gotechplace://client/dashboard',
+      },
+      {
+        id: 'notif-cli-2',
+        userId: 'usr_client_demo',
+        title: 'Candidate Applications Available',
+        body: 'New students applied to your "Junior React Native Android Developer" position.',
+        category: 'applications',
+        read: false,
+        createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+        deepLink: 'gotechplace://client/applications',
+      },
+    ];
+
+    const adminNotifs: AppNotification[] = [
+      {
+        id: 'anotif-1',
+        userId: 'usr_admin_root',
+        title: 'New Client Awaiting Verification',
+        body: 'Apex Dynamics Ltd completed employer KYC. Awaiting business review and approval.',
+        category: 'admin',
+        read: false,
+        createdAt: new Date(Date.now() - 3600000).toISOString(),
+        deepLink: 'gotechplace://admin/clientApprovals',
+      },
+      {
+        id: 'anotif-2',
+        userId: 'usr_admin_root',
+        title: 'Job Posting Review Required',
+        body: 'Nexus Innovations Ltd submitted "AI Computer Vision Pipeline Engineer" for moderation.',
+        category: 'jobs',
+        read: false,
+        createdAt: new Date(Date.now() - 14400000).toISOString(),
+        deepLink: 'gotechplace://admin/jobApprovals',
+      },
+    ];
+
+    this.notifications.set('usr_student', studentNotifs);
+    this.notifications.set('usr_student_himanshu', [...studentNotifs]);
+    this.notifications.set('student_broadcast', [...studentNotifs]);
+    this.notifications.set('usr_client_demo', clientNotifs);
+    this.notifications.set('client_broadcast', [...clientNotifs]);
+    this.notifications.set('usr_admin_root', adminNotifs);
+    this.notifications.set('admin_superuser_01', [...adminNotifs]);
+    this.notifications.set('admin_broadcast', [...adminNotifs]);
+  }
+
+  /**
+   * Subscribe to real-time notification events
+   */
+  subscribe(listener: (notification: AppNotification) => void): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  /**
+   * Notify all registered real-time subscribers
+   */
+  private notifySubscribers(notification: AppNotification): void {
+    this.listeners.forEach((listener) => {
+      try {
+        listener(notification);
+      } catch (err) {
+        console.error('Error in notification listener:', err);
+      }
+    });
+  }
 
   /**
    * Format deep links consistently across apps
@@ -66,7 +184,7 @@ class NotificationServiceManager {
   }
 
   /**
-   * Create campaign payload with validation and delivery metrics
+   * Create campaign payload with validation, delivery metrics, and multi-app inbox dispatch
    */
   createCampaignPayload(
     title: string,
@@ -109,6 +227,50 @@ class NotificationServiceManager {
     };
 
     this.campaigns.unshift(campaign);
+
+    // If campaign is active/sent, deliver AppNotification into recipient inboxes and notify subscribers
+    if (!options?.scheduledFor) {
+      const targetUserList: string[] = [];
+
+      if (target === 'individual' || target === 'multiple_users' || target === 'custom') {
+        if (options?.targetUserIds && options.targetUserIds.length > 0) {
+          targetUserList.push(...options.targetUserIds);
+        }
+      } else if (target === 'student_app' || target === 'all_students') {
+        targetUserList.push('usr_student', 'usr_student_himanshu', 'student_broadcast');
+      } else if (target === 'client_app' || target === 'all_clients') {
+        targetUserList.push('usr_client_demo', 'usr_client_pending', 'client_broadcast');
+      } else if (target === 'admin_app' || target === 'all_admins' || target === 'all_staff') {
+        targetUserList.push('usr_admin_root', 'admin_superuser_01', 'staff_mod_01', 'admin_broadcast');
+      } else {
+        // all_users / all_apps
+        targetUserList.push(
+          'usr_student',
+          'usr_student_himanshu',
+          'usr_client_demo',
+          'usr_admin_root',
+          'admin_superuser_01',
+          'all_broadcast'
+        );
+      }
+
+      targetUserList.forEach((uid) => {
+        const notif: AppNotification = {
+          id: `notif_camp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          userId: uid,
+          title: campaign.title,
+          body: campaign.message,
+          category: campaign.category,
+          imageUrl: campaign.imageUrl,
+          deepLink: campaign.deepLink,
+          read: false,
+          createdAt: new Date().toISOString(),
+        };
+        this.addNotification(notif);
+        this.notifySubscribers(notif);
+      });
+    }
+
     return campaign;
   }
 
@@ -262,6 +424,7 @@ class NotificationServiceManager {
     };
 
     this.addNotification(notif);
+    this.notifySubscribers(notif);
     return notif;
   }
 
@@ -321,30 +484,67 @@ class NotificationServiceManager {
     return this.notifications.get(userId) || [];
   }
 
-  getUnreadCount(userId: string): number {
-    const notifs = this.getUserNotifications(userId);
+  /**
+   * Get all notifications relevant to a user, including direct notifications and role/global broadcasts
+   */
+  getNotificationsForUser(userId: string, role?: string): AppNotification[] {
+    const directNotifs = this.getUserNotifications(userId);
+    const roleKey = role ? `${role}_broadcast` : '';
+    const roleNotifs = roleKey ? this.getUserNotifications(roleKey) : [];
+    const globalNotifs = this.getUserNotifications('all_broadcast');
+
+    const combined = [...directNotifs, ...roleNotifs, ...globalNotifs];
+    
+    // Deduplicate by ID and sort descending by createdAt
+    const seen = new Set<string>();
+    const deduplicated: AppNotification[] = [];
+
+    for (const n of combined) {
+      if (!seen.has(n.id)) {
+        seen.add(n.id);
+        deduplicated.push(n);
+      }
+    }
+
+    return deduplicated.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  getUnreadCount(userId: string, role?: string): number {
+    const notifs = this.getNotificationsForUser(userId, role);
     return notifs.filter((n) => !n.read).length;
   }
 
   markAsRead(userId: string, notificationId: string): void {
-    const notifs = this.getUserNotifications(userId);
-    const n = notifs.find((item) => item.id === notificationId);
-    if (n) {
-      n.read = true;
-    }
+    // Search in direct, role, and global buckets
+    this.notifications.forEach((list) => {
+      const item = list.find((n) => n.id === notificationId);
+      if (item) {
+        item.read = true;
+      }
+    });
   }
 
-  markAllAsRead(userId: string): void {
-    const notifs = this.getUserNotifications(userId);
-    notifs.forEach((n) => (n.read = true));
+  markAllAsRead(userId: string, role?: string): void {
+    const directNotifs = this.getUserNotifications(userId);
+    directNotifs.forEach((n) => (n.read = true));
+
+    if (role) {
+      const roleNotifs = this.getUserNotifications(`${role}_broadcast`);
+      roleNotifs.forEach((n) => (n.read = true));
+    }
+    const globalNotifs = this.getUserNotifications('all_broadcast');
+    globalNotifs.forEach((n) => (n.read = true));
   }
 
   deleteNotification(userId: string, notificationId: string): void {
-    const notifs = this.getUserNotifications(userId);
-    this.notifications.set(
-      userId,
-      notifs.filter((n) => n.id !== notificationId)
-    );
+    this.notifications.forEach((list, key) => {
+      this.notifications.set(
+        key,
+        list.filter((n) => n.id !== notificationId)
+      );
+    });
   }
 
   clearAll(userId: string): void {

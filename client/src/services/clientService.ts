@@ -347,30 +347,39 @@ class ClientServiceManager {
 
   // --- Notifications ---
   getNotifications(): AppNotification[] {
-    return this.notifications;
+    const client = this.getCurrentClient();
+    const uid = client ? client.uid : 'usr_client_demo';
+    return NotificationService.getNotificationsForUser(uid, 'client');
   }
 
   getUnreadNotificationsCount(): number {
-    return this.notifications.filter((n) => !n.read).length;
+    const client = this.getCurrentClient();
+    const uid = client ? client.uid : 'usr_client_demo';
+    return NotificationService.getUnreadCount(uid, 'client');
   }
 
   markNotificationRead(id: string) {
-    const n = this.notifications.find((item) => item.id === id);
-    if (n) n.read = true;
+    const client = this.getCurrentClient();
+    const uid = client ? client.uid : 'usr_client_demo';
+    NotificationService.markAsRead(uid, id);
   }
 
   markAllNotificationsAsRead() {
-    this.notifications.forEach((n) => {
-      n.read = true;
-    });
+    const client = this.getCurrentClient();
+    const uid = client ? client.uid : 'usr_client_demo';
+    NotificationService.markAllAsRead(uid, 'client');
   }
 
   deleteNotification(id: string) {
-    this.notifications = this.notifications.filter((n) => n.id !== id);
+    const client = this.getCurrentClient();
+    const uid = client ? client.uid : 'usr_client_demo';
+    NotificationService.deleteNotification(uid, id);
   }
 
   clearAllNotifications() {
-    this.notifications = [];
+    const client = this.getCurrentClient();
+    const uid = client ? client.uid : 'usr_client_demo';
+    NotificationService.clearAll(uid);
   }
 }
 

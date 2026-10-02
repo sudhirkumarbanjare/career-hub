@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
+  BackHandler,
 } from 'react-native';
 import {
   COLORS,
@@ -68,6 +69,44 @@ export const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({
   const [deleteError, setDeleteError] = useState('');
   const [deleteSuccessModalVisible, setDeleteSuccessModalVisible] = useState(false);
   const [deletedUserSummary, setDeletedUserSummary] = useState<{ name: string; uid: string } | null>(null);
+
+  // Android BackHandler for inner overlays & modals
+  useEffect(() => {
+    const onBackPress = (): boolean => {
+      if (inspectingDevice) {
+        setInspectingDevice(null);
+        return true;
+      }
+      if (superuserDeleteVisible) {
+        setSuperuserDeleteVisible(false);
+        return true;
+      }
+      if (selectedUser) {
+        setSelectedUser(null);
+        return true;
+      }
+      if (confirmDialog.visible) {
+        setConfirmDialog({ visible: false, action: 'suspend' });
+        return true;
+      }
+      if (deleteSuccessModalVisible) {
+        setDeleteSuccessModalVisible(false);
+        return true;
+      }
+      return false; // Fall back to tab back in App.tsx
+    };
+
+    const backSub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => {
+      backSub.remove();
+    };
+  }, [
+    inspectingDevice,
+    superuserDeleteVisible,
+    selectedUser,
+    confirmDialog.visible,
+    deleteSuccessModalVisible,
+  ]);
 
   const selectedUserDevices = useMemo(() => {
     if (!selectedUser) return [];

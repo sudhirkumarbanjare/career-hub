@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -9,6 +9,7 @@ import {
   Linking,
   AppState,
   AppStateStatus,
+  BackHandler,
 } from 'react-native';
 import {
   COLORS,
@@ -20,6 +21,10 @@ import {
   VersionCheckResult,
   DeviceService,
   AnalyticsService,
+  NavigationScreen,
+  handleRootBackPress,
+  parseDeepLink,
+  NotificationService,
 } from '@gotechplace/shared';
 
 import { ClientService } from './services/clientService';
@@ -45,11 +50,123 @@ export const ClientApp: React.FC = () => {
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
   const [otpSession, setOtpSession] = useState<{ verificationId: string; phone: string } | null>(null);
 
-  // 3. Navigation state
+  // 3. Navigation state - Multi-level Stack and Tab
   const [activeTab, setActiveTab] = useState<'dashboard' | 'jobs' | 'applications' | 'profile'>('dashboard');
-  const [stackScreen, setStackScreen] = useState<{ name: string; params?: any } | null>(null);
+  const [navigationStack, setNavigationStack] = useState<NavigationScreen[]>([]);
+  const [, setNotificationVersion] = useState(0);
 
-  // Run startup version check & device registration
+  // Stack navigation helpers
+  const pushScreen = useCallback((name: string, params?: any) => {
+    setNavigationStack((prev) => [...prev, { name, params }]);
+  }, []);
+
+  const popScreen = useCallback(() => {
+    setNavigationStack((prev) => (prev.length > 0 ? prev.slice(0, -1) : prev));
+  }, []);
+
+  const clearStack = useCallback(() => {
+    setNavigationStack([]);
+  }, []);
+
+  const currentStackScreen = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
+
+  // Complete Deep Link Navigation Handler for Client App
+  const handleDeepLinkUrl = useCallback((url: string) => {
+    const parsed = parseDeepLink(url);
+    if (!parsed) return;
+    if (parsed.app !== 'client' && parsed.app !== 'admin') {
+      // allow client deep links
+    }
+
+    const { screen, params } = parsed;
+    switch (screen.toLowerCase()) {
+      case 'job':
+      case 'jobs':
+      case 'my-jobs':
+        if (params?.id) {
+          clearStack();
+          setActiveTab('jobs');
+          pushScreen('client-job-detail', { id: params.id });
+        } else {
+          clearStack();
+          setActiveTab('jobs');
+        }
+        break;
+      case 'create-job':
+        clearStack();
+        setActiveTab('jobs');
+        pushScreen('create-job');
+        break;
+      case 'application':
+      case 'applications':
+      case 'candidates':
+        if (params?.jobId || params?.id) {
+          clearStack();
+          setActiveTab('applications');
+          pushScreen('applications-for-job', { jobId: params.jobId || params.id });
+        } else {
+          clearStack();
+          setActiveTab('applications');
+        }
+        break;
+      case 'notification':
+      case 'notifications':
+        clearStack();
+        pushScreen('notifications');
+        break;
+      case 'profile':
+      case 'company':
+        clearStack();
+        setActiveTab('profile');
+        break;
+      case 'dashboard':
+      default:
+        clearStack();
+        setActiveTab('dashboard');
+        break;
+    }
+  }, [clearStack, pushScreen]);
+
+  // Centralized Android BackHandler (Hardware Back & Gesture Edge-Swipe Back)
+  useEffect(() => {
+    const onHardwareBackPress = (): boolean => {
+      // 1. Auth Flow: If on OTP screen, go back to Phone Login
+      if (!user) {
+        if (otpSession) {
+          setOtpSession(null);
+          return true; // Handled, return to phone login
+        }
+        return false; // Exit app on root login screen
+      }
+
+      // 2. Registration / Approval Gates
+      if (!clientProfile?.isProfileComplete) {
+        return false;
+      }
+
+      // 3. Navigation Stack: If inside detail/sub-screen, unwind stack
+      if (navigationStack.length > 0) {
+        popScreen();
+        return true;
+      }
+
+      // 4. Secondary Tab: If on jobs/applications/profile, return to dashboard tab
+      if (activeTab !== 'dashboard') {
+        setActiveTab('dashboard');
+        return true;
+      }
+
+      // 5. Root Tab (Dashboard): Double-back to exit guard
+      return handleRootBackPress('Press back again to exit GoTechPlace Client');
+    };
+
+    const backSubscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
+    return () => {
+      backSubscription.remove();
+    };
+  }, [user, otpSession, clientProfile, navigationStack, activeTab, popScreen]);
+
+  // Run startup version check & device registration & deep link listeners
   useEffect(() => {
     const config = VersionCheckService.getDefaultConfig('client');
     const result = VersionCheckService.evaluate('1.0.0', config);
@@ -63,6 +180,21 @@ export const ClientApp: React.FC = () => {
       role: 'client',
     });
 
+    // 1. Listen for real-time push notifications from Admin & Firebase
+    const notifUnsub = NotificationService.subscribe(() => {
+      setNotificationVersion((v) => v + 1);
+    });
+
+    // 2. Cold boot deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLinkUrl(url);
+    }).catch(() => {});
+
+    // 3. Runtime deep link events
+    const linkSub = Linking.addEventListener('url', (event) => {
+      if (event.url) handleDeepLinkUrl(event.url);
+    });
+
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
         DeviceService.recordAppForeground();
@@ -72,9 +204,11 @@ export const ClientApp: React.FC = () => {
     });
 
     return () => {
+      notifUnsub();
+      linkSub.remove();
       subscription.remove();
     };
-  }, []);
+  }, [handleDeepLinkUrl]);
 
   const handleLogout = () => {
     if (user) {
@@ -85,7 +219,7 @@ export const ClientApp: React.FC = () => {
     setClientProfile(null);
     setOtpSession(null);
     setActiveTab('dashboard');
-    setStackScreen(null);
+    clearStack();
   };
 
   // 1. Force Update Screen
@@ -181,14 +315,14 @@ export const ClientApp: React.FC = () => {
 
   // 6. Main Authenticated Client App
   const renderContent = () => {
-    if (stackScreen) {
-      switch (stackScreen.name) {
+    if (currentStackScreen) {
+      switch (currentStackScreen.name) {
         case 'create-job':
           return (
             <CreateJobScreen
-              onBack={() => setStackScreen(null)}
+              onBack={popScreen}
               onJobCreated={() => {
-                setStackScreen(null);
+                clearStack();
                 setActiveTab('jobs');
               }}
             />
@@ -196,25 +330,29 @@ export const ClientApp: React.FC = () => {
         case 'client-job-detail':
           return (
             <ClientJobDetailScreen
-              jobId={stackScreen.params?.id}
-              onBack={() => setStackScreen(null)}
-              onViewApplications={(id) => setStackScreen({ name: 'applications-for-job', params: { jobId: id } })}
+              jobId={currentStackScreen.params?.id}
+              onBack={popScreen}
+              onViewApplications={(id) => pushScreen('applications-for-job', { jobId: id })}
             />
           );
         case 'applications-for-job':
           return (
             <JobApplicationsScreen
-              jobId={stackScreen.params?.jobId}
-              onBack={() => setStackScreen(null)}
+              jobId={currentStackScreen.params?.jobId}
+              onBack={popScreen}
             />
           );
         case 'notifications':
           return (
             <ClientNotificationsScreen
-              onBack={() => setStackScreen(null)}
+              onBack={popScreen}
               onOpenNotification={(deepLink) => {
-                setStackScreen(null);
-                setActiveTab('applications');
+                if (deepLink) {
+                  handleDeepLinkUrl(deepLink);
+                } else {
+                  clearStack();
+                  setActiveTab('applications');
+                }
               }}
             />
           );
@@ -227,9 +365,10 @@ export const ClientApp: React.FC = () => {
           <ClientDashboardScreen
             onNavigate={(screen, params) => {
               if (['jobs', 'applications', 'profile'].includes(screen)) {
+                clearStack();
                 setActiveTab(screen as any);
               } else {
-                setStackScreen({ name: screen, params });
+                pushScreen(screen, params);
               }
             }}
           />
@@ -237,21 +376,27 @@ export const ClientApp: React.FC = () => {
       case 'jobs':
         return (
           <MyJobsScreen
-            onBack={() => setActiveTab('dashboard')}
-            onSelectJob={(id) => setStackScreen({ name: 'client-job-detail', params: { id } })}
-            onCreateJob={() => setStackScreen({ name: 'create-job' })}
+            onBack={() => {
+              clearStack();
+              setActiveTab('dashboard');
+            }}
+            onSelectJob={(id) => pushScreen('client-job-detail', { id })}
+            onCreateJob={() => pushScreen('create-job')}
           />
         );
       case 'applications':
         return (
           <JobApplicationsScreen
-            onBack={() => setActiveTab('dashboard')}
+            onBack={() => {
+              clearStack();
+              setActiveTab('dashboard');
+            }}
           />
         );
       case 'profile':
         return (
           <ClientProfileScreen
-            onNavigateToNotifications={() => setStackScreen({ name: 'notifications' })}
+            onNavigateToNotifications={() => pushScreen('notifications')}
             onLogout={handleLogout}
           />
         );
@@ -289,11 +434,14 @@ export const ClientApp: React.FC = () => {
 
       <View style={styles.mainContainer}>{renderContent()}</View>
 
-      {!stackScreen ? (
+      {!currentStackScreen ? (
         <View style={styles.tabBar}>
           <TouchableOpacity
             style={styles.tabBtn}
-            onPress={() => setActiveTab('dashboard')}
+            onPress={() => {
+              clearStack();
+              setActiveTab('dashboard');
+            }}
           >
             <Text style={[styles.tabIcon, activeTab === 'dashboard' && styles.activeTabIcon]}>📊</Text>
             <Text style={[styles.tabLabel, activeTab === 'dashboard' && styles.activeTabLabel]}>Dashboard</Text>
@@ -301,7 +449,10 @@ export const ClientApp: React.FC = () => {
 
           <TouchableOpacity
             style={styles.tabBtn}
-            onPress={() => setActiveTab('jobs')}
+            onPress={() => {
+              clearStack();
+              setActiveTab('jobs');
+            }}
           >
             <Text style={[styles.tabIcon, activeTab === 'jobs' && styles.activeTabIcon]}>💼</Text>
             <Text style={[styles.tabLabel, activeTab === 'jobs' && styles.activeTabLabel]}>My Jobs</Text>
@@ -309,7 +460,10 @@ export const ClientApp: React.FC = () => {
 
           <TouchableOpacity
             style={styles.tabBtn}
-            onPress={() => setActiveTab('applications')}
+            onPress={() => {
+              clearStack();
+              setActiveTab('applications');
+            }}
           >
             <Text style={[styles.tabIcon, activeTab === 'applications' && styles.activeTabIcon]}>👥</Text>
             <Text style={[styles.tabLabel, activeTab === 'applications' && styles.activeTabLabel]}>Candidates</Text>
@@ -317,7 +471,10 @@ export const ClientApp: React.FC = () => {
 
           <TouchableOpacity
             style={styles.tabBtn}
-            onPress={() => setActiveTab('profile')}
+            onPress={() => {
+              clearStack();
+              setActiveTab('profile');
+            }}
           >
             <Text style={[styles.tabIcon, activeTab === 'profile' && styles.activeTabIcon]}>🏢</Text>
             <Text style={[styles.tabLabel, activeTab === 'profile' && styles.activeTabLabel]}>Company</Text>

@@ -414,30 +414,39 @@ class StudentServiceManager {
 
   // --- Notifications ---
   getNotifications(): AppNotification[] {
-    return this.notifications;
+    const student = this.getCurrentStudent();
+    const uid = student ? student.uid : 'usr_student';
+    return NotificationService.getNotificationsForUser(uid, 'student');
   }
 
   getUnreadNotificationsCount(): number {
-    return this.notifications.filter((n) => !n.read).length;
+    const student = this.getCurrentStudent();
+    const uid = student ? student.uid : 'usr_student';
+    return NotificationService.getUnreadCount(uid, 'student');
   }
 
   markNotificationAsRead(id: string) {
-    const notif = this.notifications.find((n) => n.id === id);
-    if (notif) notif.read = true;
+    const student = this.getCurrentStudent();
+    const uid = student ? student.uid : 'usr_student';
+    NotificationService.markAsRead(uid, id);
   }
 
   markAllNotificationsAsRead() {
-    this.notifications.forEach((n) => {
-      n.read = true;
-    });
+    const student = this.getCurrentStudent();
+    const uid = student ? student.uid : 'usr_student';
+    NotificationService.markAllAsRead(uid, 'student');
   }
 
   deleteNotification(id: string) {
-    this.notifications = this.notifications.filter((n) => n.id !== id);
+    const student = this.getCurrentStudent();
+    const uid = student ? student.uid : 'usr_student';
+    NotificationService.deleteNotification(uid, id);
   }
 
   clearAllNotifications() {
-    this.notifications = [];
+    const student = this.getCurrentStudent();
+    const uid = student ? student.uid : 'usr_student';
+    NotificationService.clearAll(uid);
   }
 }
 

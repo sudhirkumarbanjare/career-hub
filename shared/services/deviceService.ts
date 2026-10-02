@@ -204,6 +204,7 @@ export class DeviceServiceManager {
 
     this.currentUid = uid;
     this.currentRole = role;
+    this.lastActivitySyncTime = Date.now();
 
     const key = `${uid}:${deviceId}`;
     let record = this.userDevices.get(key);

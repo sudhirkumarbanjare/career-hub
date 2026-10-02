@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  BackHandler,
 } from 'react-native';
 import {
   COLORS,
@@ -55,6 +56,39 @@ export const AdminNotificationComposerScreen: React.FC<AdminNotificationComposer
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [errorModalConfig, setErrorModalConfig] = useState<{ title: string; message: string } | null>(null);
+
+  // Android BackHandler for inner overlays & modals
+  useEffect(() => {
+    const onBackPress = (): boolean => {
+      if (showingTemplatesScreen) {
+        setShowingTemplatesScreen(false);
+        return true;
+      }
+      if (confirmModalVisible) {
+        setConfirmModalVisible(false);
+        return true;
+      }
+      if (successModalVisible) {
+        setSuccessModalVisible(false);
+        return true;
+      }
+      if (errorModalConfig) {
+        setErrorModalConfig(null);
+        return true;
+      }
+      return false; // Let parent handle
+    };
+
+    const backSub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => {
+      backSub.remove();
+    };
+  }, [
+    showingTemplatesScreen,
+    confirmModalVisible,
+    successModalVisible,
+    errorModalConfig,
+  ]);
 
   const loadCampaigns = () => {
     setCampaigns(AdminService.getCampaigns());

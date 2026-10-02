@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  BackHandler,
 } from 'react-native';
 import {
   COLORS,
@@ -71,6 +72,35 @@ export const AdminNotificationTemplatesScreen: React.FC<AdminNotificationTemplat
     title: '',
     message: '',
   });
+
+  // Android BackHandler for inner modals & returning to composer
+  useEffect(() => {
+    const onBackPress = (): boolean => {
+      if (previewTemplate) {
+        setPreviewTemplate(null);
+        return true;
+      }
+      if (editModalVisible) {
+        setEditModalVisible(false);
+        return true;
+      }
+      if (deleteConfirmTemplate) {
+        setDeleteConfirmTemplate(null);
+        return true;
+      }
+      if (successModal.visible) {
+        setSuccessModal({ visible: false, title: '', message: '' });
+        return true;
+      }
+      onBack();
+      return true;
+    };
+
+    const backSub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => {
+      backSub.remove();
+    };
+  }, [previewTemplate, editModalVisible, deleteConfirmTemplate, successModal.visible, onBack]);
 
   const reloadTemplates = () => {
     setTemplates([...AdminService.getNotificationTemplates()]);

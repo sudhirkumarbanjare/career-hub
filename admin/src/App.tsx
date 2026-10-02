@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   AppState,
   AppStateStatus,
+  BackHandler,
+  Linking,
 } from 'react-native';
 import {
   COLORS,
@@ -21,6 +23,8 @@ import {
   ModalProvider,
   DeviceService,
   AnalyticsService,
+  handleRootBackPress,
+  parseDeepLink,
 } from '@gotechplace/shared';
 import { AdminService } from './services/adminService';
 import { AdminPhoneLoginScreen } from './screens/auth/AdminPhoneLoginScreen';
@@ -65,7 +69,107 @@ export const App: React.FC = () => {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [accessDeniedVisible, setAccessDeniedVisible] = useState(false);
 
-  // Initialize installation and lifecycle listeners
+  // Deep Link Navigation Handler for Admin App
+  const handleDeepLinkUrl = useCallback((url: string) => {
+    const parsed = parseDeepLink(url);
+    if (!parsed) return;
+    if (parsed.app !== 'admin' && parsed.app !== 'all') return;
+
+    const { screen } = parsed;
+    switch (screen.toLowerCase()) {
+      case 'user':
+      case 'users':
+        setActiveTab('users');
+        break;
+      case 'client-approval':
+      case 'clientapprovals':
+        setActiveTab('clientApprovals');
+        break;
+      case 'job-approval':
+      case 'jobapprovals':
+        setActiveTab('jobApprovals');
+        break;
+      case 'job':
+      case 'jobs':
+        setActiveTab('jobs');
+        break;
+      case 'broadcast':
+      case 'broadcasts':
+      case 'notifications':
+        setActiveTab('notifications');
+        break;
+      case 'inbox':
+      case 'admininbox':
+        setActiveTab('adminInbox');
+        break;
+      case 'project':
+      case 'projects':
+        setActiveTab('projects');
+        break;
+      case 'version':
+      case 'versions':
+        setActiveTab('versions');
+        break;
+      case 'staff':
+        setActiveTab('staff');
+        break;
+      case 'audit':
+      case 'logs':
+        setActiveTab('audit');
+        break;
+      case 'settings':
+        setActiveTab('settings');
+        break;
+      case 'dashboard':
+      default:
+        setActiveTab('dashboard');
+        break;
+    }
+  }, []);
+
+  // Centralized Android BackHandler (Hardware Back & Gesture Edge-Swipe Back)
+  useEffect(() => {
+    const onHardwareBackPress = (): boolean => {
+      // 1. Auth Flow
+      if (authStage === 'otp') {
+        setAuthStage('login');
+        return true;
+      }
+      if (authStage === 'login') {
+        return false; // Exit app cleanly
+      }
+
+      // 2. Modals Priority
+      if (logoutModalVisible) {
+        setLogoutModalVisible(false);
+        return true;
+      }
+      if (menuModalVisible) {
+        setMenuModalVisible(false);
+        return true;
+      }
+      if (accessDeniedVisible) {
+        setAccessDeniedVisible(false);
+        return true;
+      }
+
+      // 3. Secondary Tabs Priority: Unwind to Dashboard Tab
+      if (activeTab !== 'dashboard') {
+        setActiveTab('dashboard');
+        return true;
+      }
+
+      // 4. Root Dashboard: Double-back to exit guard
+      return handleRootBackPress('Press back again to exit GoTechPlace Admin');
+    };
+
+    const backSubscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
+    return () => {
+      backSubscription.remove();
+    };
+  }, [authStage, logoutModalVisible, menuModalVisible, accessDeniedVisible, activeTab]);
+
+  // Initialize installation, lifecycle, and deep linking listeners
   useEffect(() => {
     DeviceService.registerAppLaunch({
       appId: 'admin',
@@ -73,6 +177,16 @@ export const App: React.FC = () => {
       appVersion: '1.0.0',
       uid: adminUser?.uid,
       role: adminUser?.role || 'admin',
+    });
+
+    // Cold boot deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLinkUrl(url);
+    }).catch(() => {});
+
+    // Runtime deep link events
+    const linkSub = Linking.addEventListener('url', (event) => {
+      if (event.url) handleDeepLinkUrl(event.url);
     });
 
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
@@ -84,9 +198,10 @@ export const App: React.FC = () => {
     });
 
     return () => {
+      linkSub.remove();
       subscription.remove();
     };
-  }, []);
+  }, [handleDeepLinkUrl]);
 
   // Authentication Flow
   const handlePhoneSubmit = (phone: string) => {

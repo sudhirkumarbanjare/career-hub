@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import {
   formatRelativeTime,
   AppNotification,
   ConfirmationModal,
+  NotificationService,
 } from '@gotechplace/shared';
 import { StudentService } from '../../services/studentService';
 
@@ -35,6 +36,18 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
   );
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [clearConfirmVisible, setClearConfirmVisible] = useState(false);
+
+  useEffect(() => {
+    // Initial fetch
+    setNotifications(StudentService.getNotifications());
+
+    // Real-time listener for incoming push broadcasts and system events
+    const unsubscribe = NotificationService.subscribe(() => {
+      setNotifications(StudentService.getNotifications());
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

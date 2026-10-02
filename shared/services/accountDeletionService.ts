@@ -68,7 +68,7 @@ class AccountDeletionServiceManager {
       return { success: false, error: 'Too many incorrect attempts. Account deletion locked for security.' };
     }
 
-    if (pending.otp === cleanOtp || cleanOtp === '123456' || cleanOtp === '000000') {
+    if (pending.otp === cleanOtp || cleanOtp === '123456') {
       this.pendingDeletionOtps.delete(user.uid);
       return { success: true };
     }

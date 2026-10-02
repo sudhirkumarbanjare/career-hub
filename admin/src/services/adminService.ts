@@ -960,30 +960,33 @@ class AdminServiceManager {
 
   // --- Administrative Incoming Notifications & Alerts ---
   getAdminNotifications(): AppNotification[] {
-    return this.adminNotifications;
+    const uid = this.currentAdmin ? this.currentAdmin.uid : 'usr_admin_root';
+    return NotificationService.getNotificationsForUser(uid, 'admin');
   }
 
   getUnreadAdminNotificationsCount(): number {
-    return this.adminNotifications.filter((n) => !n.read).length;
+    const uid = this.currentAdmin ? this.currentAdmin.uid : 'usr_admin_root';
+    return NotificationService.getUnreadCount(uid, 'admin');
   }
 
   markAdminNotificationRead(id: string) {
-    const notif = this.adminNotifications.find((n) => n.id === id);
-    if (notif) notif.read = true;
+    const uid = this.currentAdmin ? this.currentAdmin.uid : 'usr_admin_root';
+    NotificationService.markAsRead(uid, id);
   }
 
   markAllAdminNotificationsAsRead() {
-    this.adminNotifications.forEach((n) => {
-      n.read = true;
-    });
+    const uid = this.currentAdmin ? this.currentAdmin.uid : 'usr_admin_root';
+    NotificationService.markAllAsRead(uid, 'admin');
   }
 
   clearAllAdminNotifications() {
-    this.adminNotifications = [];
+    const uid = this.currentAdmin ? this.currentAdmin.uid : 'usr_admin_root';
+    NotificationService.clearAll(uid);
   }
 
   deleteAdminNotification(id: string) {
-    this.adminNotifications = this.adminNotifications.filter((n) => n.id !== id);
+    const uid = this.currentAdmin ? this.currentAdmin.uid : 'usr_admin_root';
+    NotificationService.deleteNotification(uid, id);
   }
 
   // --- Projects Management (Full Control) ---
