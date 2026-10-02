@@ -14,6 +14,8 @@ export const COLLECTIONS = {
   REPORTS: 'reports',
   NOTIFICATIONS: 'notifications',
   NOTIFICATION_CAMPAIGNS: 'notificationCampaigns',
+  NOTIFICATION_TEMPLATES: 'notificationTemplates',
+  DELETION_JOBS: 'deletionJobs',
   AUDIT_LOGS: 'auditLogs',
   APP_VERSIONS: 'appVersions',
   ROLES: 'roles',

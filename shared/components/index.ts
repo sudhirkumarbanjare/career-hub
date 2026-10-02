@@ -23,3 +23,4 @@ export * from './WarningModal';
 export * from './InfoModal';
 export * from './LoadingModal';
 export * from './ModalContext';
+export * from './AccountDeletionModal';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,13 +18,16 @@ import {
   NotificationCampaign,
   NotificationCategory,
   NotificationTarget,
+  NotificationTemplate,
   NotificationService,
   formatRelativeDate,
   ConfirmationModal,
   SuccessModal,
   ErrorModal,
+  Modal,
 } from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
+import { AdminNotificationTemplatesScreen } from './AdminNotificationTemplatesScreen';
 
 interface AdminNotificationComposerScreenProps {
   onBack?: () => void;
@@ -42,6 +45,11 @@ export const AdminNotificationComposerScreen: React.FC<AdminNotificationComposer
   const [imageUrl, setImageUrl] = useState('');
   const [sending, setSending] = useState(false);
   const [campaigns, setCampaigns] = useState<NotificationCampaign[]>([]);
+
+  // Template Library view state
+  const [showingTemplatesScreen, setShowingTemplatesScreen] = useState(false);
+  const [selectedTemplateName, setSelectedTemplateName] = useState<string | null>(null);
+  const [variableInputs, setVariableInputs] = useState<Record<string, string>>({});
 
   // Modal states
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
@@ -71,20 +79,82 @@ export const AdminNotificationComposerScreen: React.FC<AdminNotificationComposer
     }
   );
 
-  const targetLabel =
-    target === 'student_app' || target === 'all_students'
-      ? 'All Students'
-      : target === 'client_app' || target === 'all_clients'
-      ? 'All Registered Clients'
-      : target === 'admin_app' || target === 'all_admins' || target === 'all_staff'
-      ? 'All Admin Personnel'
-      : target === 'individual'
-      ? `Individual User (${parsedTargetUserIds[0] || 'Selected'})`
-      : target === 'multiple_users'
-      ? `${parsedTargetUserIds.length} Targeted Users`
-      : 'Entire GoTechPlace Ecosystem';
+  const targetLabels: Record<string, string> = {
+    student_app: 'Students Only',
+    client_app: 'Clients Only',
+    all_apps: 'All Users',
+    admin_app: 'Staff / Admins',
+    all_students: 'All Students',
+    all_clients: 'All Clients',
+    all_admins: 'All Admins',
+    all_staff: 'All Staff',
+    all_users: 'All Users',
+    individual: 'Single User',
+    multiple_users: 'Selected Users',
+    custom: 'Custom Audience',
+  };
+  const targetLabel = targetLabels[target] || target;
+
+  const detectedPlaceholders = useMemo(() => {
+    return Array.from(
+      new Set([
+        ...NotificationService.extractVariables(title),
+        ...NotificationService.extractVariables(message),
+      ])
+    );
+  }, [title, message]);
+
+  const handleApplyTemplate = (tmpl: NotificationTemplate) => {
+    setTitle(tmpl.title);
+    setMessage(tmpl.body);
+    setCategory(tmpl.category);
+    if (tmpl.deepLink) setDeepLink(tmpl.deepLink);
+    if (tmpl.imageUrl) setImageUrl(tmpl.imageUrl);
+    if (tmpl.targetAudienceDefault) setTarget(tmpl.targetAudienceDefault);
+    setSelectedTemplateName(tmpl.name);
+
+    // Initialize sample variables
+    const initVars: Record<string, string> = {};
+    tmpl.variables.forEach((v) => {
+      initVars[v] = '';
+    });
+    setVariableInputs(initVars);
+    setShowingTemplatesScreen(false);
+  };
+
+  const handleSubstituteVariable = (varKey: string, value: string) => {
+    const updatedVars = { ...variableInputs, [varKey]: value };
+    setVariableInputs(updatedVars);
+  };
+
+  const applyAllVariablesToText = () => {
+    let newTitle = title;
+    let newMessage = message;
+    Object.entries(variableInputs).forEach(([key, val]) => {
+      if (val && val.trim().length > 0) {
+        const placeholder = `{{${key}}}`;
+        newTitle = newTitle.split(placeholder).join(val.trim());
+        newMessage = newMessage.split(placeholder).join(val.trim());
+      }
+    });
+    setTitle(newTitle);
+    setMessage(newMessage);
+  };
 
   const handleSend = () => {
+    // 1. Check for unresolved {{variables}} in title or message
+    const unrenderedInTitle = NotificationService.extractVariables(title);
+    const unrenderedInMessage = NotificationService.extractVariables(message);
+    const allUnrendered = Array.from(new Set([...unrenderedInTitle, ...unrenderedInMessage]));
+
+    if (allUnrendered.length > 0) {
+      setErrorModalConfig({
+        title: 'Unresolved Placeholders',
+        message: `Your notification still contains unrendered variable placeholders: ${allUnrendered.map((v) => `{{${v}}}`).join(', ')}. Please replace them with actual text before broadcasting.`,
+      });
+      return;
+    }
+
     const validation = NotificationService.validateCampaign(
       title,
       message,
@@ -125,6 +195,15 @@ export const AdminNotificationComposerScreen: React.FC<AdminNotificationComposer
     setSuccessModalVisible(true);
   };
 
+  if (showingTemplatesScreen) {
+    return (
+      <AdminNotificationTemplatesScreen
+        onBack={() => setShowingTemplatesScreen(false)}
+        onUseTemplate={(tmpl) => handleApplyTemplate(tmpl)}
+      />
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header
@@ -132,12 +211,41 @@ export const AdminNotificationComposerScreen: React.FC<AdminNotificationComposer
         subtitle="Dispatch push notifications & manage campaigns"
         showBack={!!onBack}
         onBack={onBack}
+        rightAction={
+          <TouchableOpacity
+            style={styles.headerTmplBtn}
+            onPress={() => setShowingTemplatesScreen(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.headerTmplBtnText}>📋 Templates (30+)</Text>
+          </TouchableOpacity>
+        }
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Composer Card */}
         <Card style={styles.composerCard}>
-          <Text style={styles.cardTitle}>Create Broadcast Campaign</Text>
+          <View style={styles.composerHeaderRow}>
+            <Text style={styles.cardTitle}>Create Broadcast Campaign</Text>
+            <TouchableOpacity
+              style={styles.tmplSelectLink}
+              onPress={() => setShowingTemplatesScreen(true)}
+            >
+              <Text style={styles.tmplSelectLinkText}>Load Template ⚡</Text>
+            </TouchableOpacity>
+          </View>
+
+          {selectedTemplateName && (
+            <View style={styles.activeTmplBanner}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.activeTmplLabel}>Using Template:</Text>
+                <Text style={styles.activeTmplName}>{selectedTemplateName}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setSelectedTemplateName(null)}>
+                <Text style={styles.clearTmplText}>Reset</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Target Audience */}
           <Text style={styles.fieldLabel}>Target Audience:</Text>
@@ -213,6 +321,35 @@ export const AdminNotificationComposerScreen: React.FC<AdminNotificationComposer
               );
             })}
           </View>
+
+          {/* Dynamic Placeholder Substitutions Box if variables detected */}
+          {detectedPlaceholders.length > 0 && (
+            <View style={styles.placeholdersSubBox}>
+              <View style={styles.placeholdersHeader}>
+                <Text style={styles.placeholdersHeading}>
+                  ⚡ Template Placeholders Detected ({detectedPlaceholders.length})
+                </Text>
+                <TouchableOpacity onPress={applyAllVariablesToText} style={styles.applyVarsBtn}>
+                  <Text style={styles.applyVarsBtnText}>Apply All to Text ↵</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.placeholdersSub}>
+                Fill in variable values below or edit message directly:
+              </Text>
+
+              {detectedPlaceholders.map((varKey) => (
+                <View key={varKey} style={styles.varSubRow}>
+                  <Text style={styles.varSubLabel}>{'{{' + varKey + '}}'}:</Text>
+                  <TextInput
+                    style={styles.varSubInput}
+                    value={variableInputs[varKey] || ''}
+                    onChangeText={(val) => handleSubstituteVariable(varKey, val)}
+                    placeholder={`Enter ${varKey}...`}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* Title */}
           <Text style={styles.fieldLabel}>Headline / Title:</Text>
@@ -615,6 +752,129 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     fontSize: 11,
     color: COLORS.textSecondary,
+  },
+  headerTmplBtn: {
+    backgroundColor: COLORS.brand[50],
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.brand[200],
+  },
+  headerTmplBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.brand[700],
+  },
+  composerHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  tmplSelectLink: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  tmplSelectLinkText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1d4ed8',
+  },
+  activeTmplBanner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+    borderRadius: 8,
+    padding: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  activeTmplLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#166534',
+    textTransform: 'uppercase',
+  },
+  activeTmplName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#15803d',
+    marginTop: 2,
+  },
+  clearTmplText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.danger[600],
+    paddingHorizontal: SPACING.xs,
+  },
+  placeholdersSubBox: {
+    backgroundColor: '#fffbeb',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    padding: SPACING.sm,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  placeholdersHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  placeholdersHeading: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#92400e',
+  },
+  applyVarsBtn: {
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+  },
+  applyVarsBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#b45309',
+  },
+  placeholdersSub: {
+    fontSize: 11,
+    color: '#78350f',
+    marginBottom: SPACING.xs,
+  },
+  varSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: SPACING.xs,
+  },
+  varSubLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: 'monospace',
+    color: '#b45309',
+    width: 130,
+  },
+  varSubInput: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    paddingHorizontal: SPACING.xs + 2,
+    paddingVertical: 3,
+    fontSize: 12,
+    color: COLORS.text,
   },
 });
 

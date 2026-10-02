@@ -20,6 +20,8 @@ import {
   BadgeVariant,
   Button,
   Modal,
+  AccountDeletionModal,
+  User,
 } from '@gotechplace/shared';
 import { ClientService } from '../../services/clientService';
 
@@ -34,6 +36,7 @@ export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({
 }) => {
   const [client, setClient] = useState(ClientService.getCurrentClient());
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const unreadCount = ClientService.getUnreadNotificationsCount();
 
   const [editCompany, setEditCompany] = useState(client.companyName);
@@ -208,14 +211,65 @@ export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({
           ) : null}
         </Card>
 
+        {/* Account Settings & Privacy */}
+        <Card style={styles.infoCard}>
+          <Text style={styles.cardHeading}>Account Settings & Privacy</Text>
+          <Text style={styles.settingsSubtext}>
+            Manage authenticated session, corporate privacy controls, and permanent company account eradication.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.deleteActionCard}
+            onPress={() => setIsDeleteOpen(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.deleteActionLeft}>
+              <View style={styles.deleteIconCircle}>
+                <Text style={{ fontSize: 16 }}>🗑️</Text>
+              </View>
+              <View style={{ marginLeft: SPACING.sm, flex: 1 }}>
+                <Text style={styles.deleteActionTitle}>Delete Employer Account</Text>
+                <Text style={styles.deleteActionDesc}>
+                  Permanently erase organization profile, close job postings, and delete auth credentials
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.deleteActionArrow}>→</Text>
+          </TouchableOpacity>
+        </Card>
+
         <Button
           title="LOG OUT OF CLIENT ACCOUNT"
           onPress={onLogout}
-          variant="danger"
+          variant="outline"
           size="md"
           style={styles.logoutBtn}
         />
       </ScrollView>
+
+      {/* Account Deletion Modal with Fresh OTP */}
+      <AccountDeletionModal
+        visible={isDeleteOpen}
+        user={{
+          uid: client.uid,
+          phoneNumber: client.phoneNumber,
+          name: client.companyName,
+          role: 'client',
+          status: 'active',
+          isApproved: client.approvalStatus === 'approved',
+          createdAt: client.createdAt,
+          updatedAt: client.updatedAt,
+        }}
+        onClose={() => setIsDeleteOpen(false)}
+        onDeletionSuccess={() => {
+          setIsDeleteOpen(false);
+          ClientService.clearSession();
+          onLogout();
+        }}
+        onDataCleanup={async (uid) => {
+          ClientService.clearSession();
+        }}
+      />
 
       {/* Edit Modal */}
       <Modal
@@ -477,5 +531,51 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.gray[600],
     fontWeight: TYPOGRAPHY.weights.semibold,
+  },
+  settingsSubtext: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    color: COLORS.gray[500],
+    marginBottom: SPACING.md,
+    lineHeight: 18,
+  },
+  deleteActionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: SPACING.sm + 2,
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    borderRadius: RADIUS.md,
+  },
+  deleteActionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  deleteIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fee2e2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteActionTitle: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.danger[700],
+  },
+  deleteActionDesc: {
+    fontSize: 10,
+    color: COLORS.danger[600],
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  deleteActionArrow: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.danger[500],
+    marginLeft: 8,
   },
 });

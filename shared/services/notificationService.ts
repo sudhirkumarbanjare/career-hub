@@ -5,12 +5,18 @@ import {
   NotificationTarget,
   SystemNotificationEvent,
   DeviceToken,
+  NotificationTemplate,
+  NotificationTemplateApp,
+  NotificationTemplateStatus,
+  TemplateRenderResult,
 } from '../types/notification';
+import { DEFAULT_NOTIFICATION_TEMPLATES } from '../data/defaultNotificationTemplates';
 
 class NotificationServiceManager {
   private notifications: Map<string, AppNotification[]> = new Map();
   private deviceTokens: Map<string, DeviceToken[]> = new Map();
   private campaigns: NotificationCampaign[] = [];
+  private templates: NotificationTemplate[] = [...DEFAULT_NOTIFICATION_TEMPLATES];
 
   /**
    * Format deep links consistently across apps
@@ -343,6 +349,267 @@ class NotificationServiceManager {
 
   clearAll(userId: string): void {
     this.notifications.set(userId, []);
+  }
+
+  // --- Push Notification Templates Management ---
+
+  /**
+   * Extract all {{variable}} keys from a template string
+   */
+  extractVariables(text: string): string[] {
+    if (!text) return [];
+    const regex = /\{\{([a-zA-Z0-9_-]+)\}\}/g;
+    const matches = new Set<string>();
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(text)) !== null) {
+      if (m[1]) matches.add(m[1]);
+    }
+    return Array.from(matches);
+  }
+
+  /**
+   * Render template with given variable dictionary and validate for unresolved placeholders
+   */
+  renderTemplate(
+    template: NotificationTemplate,
+    variables: Record<string, string>
+  ): TemplateRenderResult {
+    let renderedTitle = template.title;
+    let renderedBody = template.body;
+
+    const allNeeded = new Set([
+      ...this.extractVariables(template.title),
+      ...this.extractVariables(template.body),
+    ]);
+
+    const unresolved: string[] = [];
+
+    allNeeded.forEach((varKey) => {
+      const val = variables[varKey];
+      const placeholder = `{{${varKey}}}`;
+      if (val !== undefined && val !== null && val.trim().length > 0) {
+        renderedTitle = renderedTitle.split(placeholder).join(val.trim());
+        renderedBody = renderedBody.split(placeholder).join(val.trim());
+      } else {
+        unresolved.push(varKey);
+      }
+    });
+
+    return {
+      renderedTitle,
+      renderedBody,
+      unresolvedVariables: unresolved,
+      missingVariables: unresolved,
+      hasUnrenderedPlaceholders: unresolved.length > 0,
+      isValid: unresolved.length === 0,
+    };
+  }
+
+  /**
+   * Get all templates with optional filters or app string
+   */
+  getTemplates(
+    filtersOrApp?:
+      | NotificationTemplateApp
+      | {
+          app?: NotificationTemplateApp;
+          category?: NotificationCategory;
+          status?: NotificationTemplateStatus;
+          search?: string;
+        }
+  ): NotificationTemplate[] {
+    let list = this.templates.map((t) => ({
+      ...t,
+      isPredefined: t.isPredefined ?? t.isSystem,
+    }));
+
+    if (typeof filtersOrApp === 'string') {
+      if (filtersOrApp !== 'all') {
+        list = list.filter((t) => t.app === filtersOrApp || t.app === 'all');
+      }
+      return list;
+    }
+
+    const filters = filtersOrApp;
+    if (filters?.app && filters.app !== 'all') {
+      list = list.filter((t) => t.app === filters.app || t.app === 'all');
+    }
+
+    if (filters?.category) {
+      list = list.filter((t) => t.category === filters.category);
+    }
+
+    if (filters?.status) {
+      list = list.filter((t) => t.status === filters.status);
+    }
+
+    if (filters?.search) {
+      const q = filters.search.toLowerCase();
+      list = list.filter(
+        (t) =>
+          t.name.toLowerCase().includes(q) ||
+          t.title.toLowerCase().includes(q) ||
+          t.body.toLowerCase().includes(q)
+      );
+    }
+
+    return list;
+  }
+
+  getTemplateById(id: string): NotificationTemplate | undefined {
+    const tmpl = this.templates.find((t) => t.id === id);
+    if (!tmpl) return undefined;
+    return {
+      ...tmpl,
+      isPredefined: tmpl.isPredefined ?? tmpl.isSystem,
+    };
+  }
+
+  /**
+   * Create a new custom notification template
+   */
+  createCustomTemplate(data: {
+    app: NotificationTemplateApp;
+    name: string;
+    title: string;
+    body: string;
+    category: NotificationCategory;
+    deepLink?: string;
+    imageUrl?: string;
+    targetRole?: string;
+    targetAudienceDefault?: NotificationTarget;
+    createdBy?: string;
+    createdByUid?: string;
+  }): { success: boolean; template?: NotificationTemplate; error?: string } {
+    if (!data.name || data.name.trim().length < 3) {
+      return { success: false, error: 'Template name must be at least 3 characters.' };
+    }
+    if (!data.title || data.title.trim().length < 3) {
+      return { success: false, error: 'Template headline must be at least 3 characters.' };
+    }
+    if (!data.body || data.body.trim().length < 5) {
+      return { success: false, error: 'Template message body must be at least 5 characters.' };
+    }
+
+    const variables = Array.from(
+      new Set([
+        ...this.extractVariables(data.title),
+        ...this.extractVariables(data.body),
+      ])
+    );
+
+    const newTemplate: NotificationTemplate = {
+      id: `tmpl_cust_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      app: data.app,
+      name: data.name.trim(),
+      title: data.title.trim(),
+      body: data.body.trim(),
+      category: data.category,
+      deepLink: data.deepLink?.trim() || undefined,
+      imageUrl: data.imageUrl?.trim() || undefined,
+      variables,
+      isSystem: false,
+      isPredefined: false,
+      targetRole: data.targetRole,
+      status: 'active',
+      targetAudienceDefault: data.targetAudienceDefault,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: data.createdBy || 'Admin',
+      createdByUid: data.createdByUid,
+    };
+
+    this.templates.unshift(newTemplate);
+    return { success: true, template: newTemplate };
+  }
+
+  /**
+   * Update an existing custom template
+   */
+  updateTemplate(
+    id: string,
+    updates: Partial<Pick<NotificationTemplate, 'name' | 'title' | 'body' | 'category' | 'deepLink' | 'imageUrl' | 'status' | 'app' | 'targetAudienceDefault' | 'targetRole'>>
+  ): { success: boolean; template?: NotificationTemplate; error?: string } {
+    const template = this.templates.find((t) => t.id === id);
+    if (!template) {
+      return { success: false, error: 'Template not found.' };
+    }
+
+    if ((template.isSystem || template.isPredefined) && updates.name && updates.name !== template.name) {
+      return { success: false, error: 'System template names are immutable.' };
+    }
+
+    Object.assign(template, updates, {
+      updatedAt: new Date().toISOString(),
+    });
+
+    if (updates.title || updates.body) {
+      template.variables = Array.from(
+        new Set([
+          ...this.extractVariables(template.title),
+          ...this.extractVariables(template.body),
+        ])
+      );
+    }
+
+    template.isPredefined = template.isPredefined ?? template.isSystem;
+
+    return { success: true, template };
+  }
+
+  /**
+   * Duplicate any template (system or custom) into a new custom template
+   */
+  duplicateTemplate(
+    id: string,
+    createdBy?: string
+  ): { success: boolean; template?: NotificationTemplate; error?: string } {
+    const source = this.getTemplateById(id);
+    if (!source) {
+      return { success: false, error: 'Source template not found.' };
+    }
+
+    const duplicated: NotificationTemplate = {
+      ...source,
+      id: `tmpl_cust_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      name: `Copy of ${source.name}`,
+      isSystem: false, // Duplicates are always custom
+      isPredefined: false,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: createdBy || 'Admin',
+    };
+
+    this.templates.unshift(duplicated);
+    return { success: true, template: duplicated };
+  }
+
+  /**
+   * Delete a custom notification template (System templates are protected!)
+   */
+  deleteCustomTemplate(id: string): { success: boolean; error?: string } {
+    const template = this.getTemplateById(id);
+    if (!template) {
+      return { success: false, error: 'Template not found.' };
+    }
+
+    if (template.isSystem || template.isPredefined) {
+      return { success: false, error: 'Predefined system templates cannot be deleted.' };
+    }
+
+    this.templates = this.templates.filter((t) => t.id !== id);
+    return { success: true };
+  }
+
+  /**
+   * Reset templates to predefined baseline (for tests / recovery)
+   */
+  resetTemplates(): void {
+    this.templates = DEFAULT_NOTIFICATION_TEMPLATES.map((t) => ({
+      ...t,
+      isPredefined: t.isSystem,
+    }));
   }
 }
 

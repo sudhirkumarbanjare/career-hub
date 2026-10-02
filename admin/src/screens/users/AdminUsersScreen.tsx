@@ -6,6 +6,8 @@ import {
   FlatList,
   TouchableOpacity,
   ScrollView,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import {
   COLORS,
@@ -20,6 +22,8 @@ import {
   Button,
   ConfirmDialog,
   Modal,
+  SuccessModal,
+  ErrorModal,
   formatDate,
   formatRelativeDate,
   User,
@@ -38,6 +42,9 @@ export const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({
   onBack,
   initialRole = 'all',
 }) => {
+  const currentAdmin = AdminService.getCurrentAdmin();
+  const isSuperuser = currentAdmin.role === 'superuser';
+
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState(initialRole);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -53,6 +60,14 @@ export const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({
   // Detail Modal
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [inspectingDevice, setInspectingDevice] = useState<DeviceRecord | null>(null);
+
+  // Superuser Permanent Deletion Modal state
+  const [superuserDeleteVisible, setSuperuserDeleteVisible] = useState(false);
+  const [deleteConfirmPhrase, setDeleteConfirmPhrase] = useState('');
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteSuccessModalVisible, setDeleteSuccessModalVisible] = useState(false);
+  const [deletedUserSummary, setDeletedUserSummary] = useState<{ name: string; uid: string } | null>(null);
 
   const selectedUserDevices = useMemo(() => {
     if (!selectedUser) return [];
@@ -270,20 +285,134 @@ export const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({
             </View>
 
             {selectedUser.role !== 'superuser' ? (
-              <Button
-                title={selectedUser.status === 'active' ? 'SUSPEND THIS USER' : 'ACTIVATE USER ACCOUNT'}
-                onPress={() => {
-                  const u = selectedUser;
-                  setSelectedUser(null);
-                  handleToggleStatus(u);
-                }}
-                variant={selectedUser.status === 'active' ? 'danger' : 'primary'}
-                size="md"
-                style={{ marginTop: SPACING.lg }}
-              />
+              <View style={{ marginTop: SPACING.lg, gap: SPACING.sm }}>
+                <Button
+                  title={selectedUser.status === 'active' ? 'SUSPEND THIS USER' : 'ACTIVATE USER ACCOUNT'}
+                  onPress={() => {
+                    const u = selectedUser;
+                    setSelectedUser(null);
+                    handleToggleStatus(u);
+                  }}
+                  variant={selectedUser.status === 'active' ? 'outline' : 'primary'}
+                  size="md"
+                />
+
+                {/* GATED STRICTLY FOR SUPERUSER ONLY */}
+                {isSuperuser ? (
+                  <Button
+                    title="PERMANENTLY ERASE ALL USER DATA ⚠️"
+                    onPress={() => {
+                      setDeleteConfirmPhrase('');
+                      setDeleteError('');
+                      setSuperuserDeleteVisible(true);
+                    }}
+                    variant="danger"
+                    size="md"
+                  />
+                ) : null}
+              </View>
             ) : null}
           </View>
         </Modal>
+      )}
+
+      {/* Superuser Permanent Data Deletion Confirmation Modal */}
+      {selectedUser && superuserDeleteVisible && (
+        <Modal
+          visible={superuserDeleteVisible}
+          onClose={() => {
+            if (!deleteInProgress) setSuperuserDeleteVisible(false);
+          }}
+          title="Superuser: Permanent Data Eradication"
+        >
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={styles.superDeleteWarningBox}>
+              <Text style={styles.superDeleteWarningTitle}>⚠️ IRREVERSIBLE SUPERUSER OPERATION</Text>
+              <Text style={styles.superDeleteWarningText}>
+                You are about to completely and permanently purge all database records, profiles, applications, job relations, device registrations, and Firebase Auth credentials for this user.
+              </Text>
+            </View>
+
+            <View style={styles.targetSummaryCard}>
+              <Text style={styles.targetSummaryHeading}>Target Account Summary:</Text>
+              <Text style={styles.targetSummaryLine}>• <Text style={{ fontWeight: 'bold' }}>Name:</Text> {selectedUser.name || 'Unnamed'}</Text>
+              <Text style={styles.targetSummaryLine}>• <Text style={{ fontWeight: 'bold' }}>Role:</Text> {selectedUser.role.toUpperCase()}</Text>
+              <Text style={styles.targetSummaryLine}>• <Text style={{ fontWeight: 'bold' }}>Phone:</Text> {selectedUser.phoneNumber}</Text>
+              <Text style={styles.targetSummaryLine}>• <Text style={{ fontWeight: 'bold' }}>UID:</Text> {selectedUser.uid}</Text>
+              <Text style={styles.targetSummaryLine}>• <Text style={{ fontWeight: 'bold' }}>Active Devices:</Text> {selectedUserDevices.length}</Text>
+            </View>
+
+            <Text style={styles.phrasePromptText}>
+              To confirm destruction, type <Text style={styles.phraseCode}>DELETE</Text> or the exact UID below:
+            </Text>
+
+            <TextInput
+              style={styles.phraseInput}
+              value={deleteConfirmPhrase}
+              onChangeText={setDeleteConfirmPhrase}
+              placeholder="Type DELETE to confirm"
+              autoCapitalize="none"
+              editable={!deleteInProgress}
+            />
+
+            {deleteError ? (
+              <Text style={styles.deleteErrorText}>{deleteError}</Text>
+            ) : null}
+
+            {deleteInProgress ? (
+              <View style={styles.deletingProgressRow}>
+                <ActivityIndicator size="small" color={COLORS.danger[600]} />
+                <Text style={styles.deletingProgressText}>Purging multi-collection records...</Text>
+              </View>
+            ) : (
+              <View style={styles.deleteModalBtnRow}>
+                <Button
+                  title="Cancel"
+                  onPress={() => setSuperuserDeleteVisible(false)}
+                  variant="outline"
+                  size="md"
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  title="CONFIRM PURGE"
+                  onPress={async () => {
+                    setDeleteInProgress(true);
+                    setDeleteError('');
+                    const res = await AdminService.permanentlyDeleteUserData(
+                      selectedUser.uid,
+                      deleteConfirmPhrase
+                    );
+                    setDeleteInProgress(false);
+
+                    if (res.success) {
+                      const u = selectedUser;
+                      setDeletedUserSummary({ name: u.name || u.phoneNumber, uid: u.uid });
+                      setSuperuserDeleteVisible(false);
+                      setSelectedUser(null);
+                      setUsersList([...AdminService.getUsers()]);
+                      setDeleteSuccessModalVisible(true);
+                    } else {
+                      setDeleteError(res.error || res.message || 'Deletion failed.');
+                    }
+                  }}
+                  variant="danger"
+                  size="md"
+                  style={{ flex: 1 }}
+                />
+              </View>
+            )}
+          </ScrollView>
+        </Modal>
+      )}
+
+      {/* Success Modal after deletion */}
+      {deleteSuccessModalVisible && deletedUserSummary && (
+        <SuccessModal
+          visible={deleteSuccessModalVisible}
+          title="User Eradicated"
+          message={`Complete account and associated Firestore data for ${deletedUserSummary.name} (UID: ${deletedUserSummary.uid}) has been permanently purged.`}
+          onClose={() => setDeleteSuccessModalVisible(false)}
+        />
       )}
 
       {/* Full Device Details View */}
@@ -496,5 +625,92 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     color: COLORS.brand[600],
+  },
+  superDeleteWarningBox: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fca5a5',
+    borderWidth: 1,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm + 2,
+    marginBottom: SPACING.md,
+  },
+  superDeleteWarningTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.danger[700],
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  superDeleteWarningText: {
+    fontSize: 11,
+    color: COLORS.danger[600],
+    lineHeight: 16,
+  },
+  targetSummaryCard: {
+    backgroundColor: COLORS.gray[50],
+    borderColor: COLORS.gray[200],
+    borderWidth: 1,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm + 2,
+    marginBottom: SPACING.md,
+  },
+  targetSummaryHeading: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: COLORS.gray[900],
+    marginBottom: 4,
+  },
+  targetSummaryLine: {
+    fontSize: 11,
+    color: COLORS.gray[700],
+    lineHeight: 18,
+  },
+  phrasePromptText: {
+    fontSize: 12,
+    color: COLORS.gray[800],
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  phraseCode: {
+    fontWeight: 'bold',
+    color: COLORS.danger[600],
+    backgroundColor: '#fee2e2',
+    paddingHorizontal: 4,
+    borderRadius: 3,
+  },
+  phraseInput: {
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.danger[500],
+    borderWidth: 1.5,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    fontSize: 13,
+    color: COLORS.gray[900],
+    marginBottom: SPACING.md,
+  },
+  deleteErrorText: {
+    fontSize: 11,
+    color: COLORS.danger[600],
+    fontWeight: 'bold',
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+  },
+  deletingProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+  },
+  deletingProgressText: {
+    fontSize: 12,
+    color: COLORS.danger[700],
+    fontWeight: '600',
+  },
+  deleteModalBtnRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.xs,
   },
 });

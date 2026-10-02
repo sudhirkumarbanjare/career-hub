@@ -187,6 +187,32 @@ service cloud.firestore {
     }
 
     // ----------------------------------------------------
+    // NOTIFICATION TEMPLATES (Predefined + Custom)
+    // ----------------------------------------------------
+    match /notificationTemplates/{templateId} {
+      // Authenticated users can read templates
+      allow read: if isAuthenticated();
+      // Admins can create and update custom or system templates
+      allow create, update: if isAdmin();
+      // Predefined system templates cannot be deleted; custom can be deleted by admin
+      allow delete: if isAdmin() && resource.data.isPredefined != true;
+    }
+
+    // ----------------------------------------------------
+    // DELETION JOBS (Self-Deletion & Superuser Cleanup)
+    // ----------------------------------------------------
+    match /deletionJobs/{jobId} {
+      // Superusers or the target user themselves can inspect job status
+      allow read: if isSuperuser() || (isAuthenticated() && resource.data.targetUid == request.auth.uid);
+      // User can create self-deletion job; superuser can create any
+      allow create: if (isAuthenticated() && request.resource.data.targetUid == request.auth.uid) || isSuperuser();
+      // Job updater must be target user or superuser
+      allow update: if (isAuthenticated() && resource.data.targetUid == request.auth.uid) || isSuperuser();
+      // Deletion jobs are immutable audit records
+      allow delete: if false;
+    }
+
+    // ----------------------------------------------------
     // AUDIT LOGS (Immutable)
     // ----------------------------------------------------
     match /auditLogs/{logId} {

@@ -8,3 +8,4 @@ export * from './jobService';
 export * from './courseService';
 export * from './deviceService';
 export * from './analyticsService';
+export * from './accountDeletionService';

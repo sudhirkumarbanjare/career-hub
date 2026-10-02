@@ -24,6 +24,12 @@ import {
   DEFAULT_ROLE_CONFIGS,
   DEFAULT_APP_VERSIONS,
   DEFAULT_CATEGORIES,
+  AccountDeletionService,
+  NotificationTemplate,
+  NotificationTemplateApp,
+  NotificationTemplateStatus,
+  TemplateRenderResult,
+  DeletionResult,
 } from '@gotechplace/shared';
 
 class AdminServiceManager {
@@ -489,6 +495,58 @@ class AdminServiceManager {
     return true;
   }
 
+  /**
+   * Superuser-Only Complete User Data Deletion
+   */
+  async permanentlyDeleteUserData(
+    targetUid: string,
+    confirmationPhrase: string
+  ): Promise<DeletionResult> {
+    const targetUser = this.getUserById(targetUid);
+    if (!targetUser) {
+      return {
+        success: false,
+        deletionJobId: '',
+        message: 'Target user does not exist.',
+        deletedRecordsCount: 0,
+        error: 'User not found in system directory.',
+      };
+    }
+
+    const result = await AccountDeletionService.executeSuperuserDeletion(
+      targetUser,
+      this.currentAdmin,
+      confirmationPhrase,
+      async (uid, role) => {
+        // 1. Remove from in-memory users array
+        this.users = this.users.filter((u) => u.uid !== uid);
+
+        // 2. If client, remove from clients array and close/delete jobs
+        if (role === 'client') {
+          this.clients = this.clients.filter((c) => c.uid !== uid);
+          this.jobs = this.jobs.filter((j) => j.clientId !== uid);
+        }
+
+        // 3. If staff, remove from staffMembers
+        this.staffMembers = this.staffMembers.filter((s) => s.uid !== uid);
+
+        // 4. Remove user reports
+        this.reports = this.reports.filter((r) => r.reporterId !== uid && r.targetId !== uid);
+      }
+    );
+
+    if (result.success) {
+      this.logAction('DELETE_USER', 'user', targetUid, {
+        targetRole: targetUser.role,
+        targetPhone: targetUser.phoneNumber,
+        targetName: targetUser.name,
+        deletionJobId: result.deletionJobId,
+      });
+    }
+
+    return result;
+  }
+
   // --- Client Approvals ---
   getPendingClients(): ClientProfile[] {
     return this.clients.filter((c) => c.approvalStatus === 'pending');
@@ -767,6 +825,86 @@ class AdminServiceManager {
     this.campaigns.unshift(campaign);
     this.logAction('SEND_NOTIFICATION', 'notification', campaign.id, { title, target, category });
     return campaign;
+  }
+
+  // --- Notification Templates Management ---
+  getNotificationTemplates(filters?: {
+    app?: NotificationTemplateApp;
+    category?: NotificationCategory;
+    status?: NotificationTemplateStatus;
+    search?: string;
+  }): NotificationTemplate[] {
+    return NotificationService.getTemplates(filters);
+  }
+
+  getNotificationTemplateById(id: string): NotificationTemplate | undefined {
+    return NotificationService.getTemplateById(id);
+  }
+
+  createNotificationTemplate(data: {
+    app: NotificationTemplateApp;
+    name: string;
+    title: string;
+    body: string;
+    category: NotificationCategory;
+    deepLink?: string;
+    imageUrl?: string;
+    targetAudienceDefault?: NotificationTarget;
+  }): { success: boolean; template?: NotificationTemplate; error?: string } {
+    const res = NotificationService.createCustomTemplate({
+      ...data,
+      createdBy: this.currentAdmin.name,
+    });
+    if (res.success && res.template) {
+      this.logAction('CREATE_TEMPLATE', 'notification', res.template.id, {
+        name: res.template.name,
+        app: res.template.app,
+      });
+    }
+    return res;
+  }
+
+  updateNotificationTemplate(
+    id: string,
+    updates: Partial<Pick<NotificationTemplate, 'name' | 'title' | 'body' | 'category' | 'deepLink' | 'imageUrl' | 'status' | 'app' | 'targetAudienceDefault'>>
+  ): { success: boolean; template?: NotificationTemplate; error?: string } {
+    const res = NotificationService.updateTemplate(id, updates);
+    if (res.success && res.template) {
+      this.logAction('UPDATE_TEMPLATE', 'notification', id, updates);
+    }
+    return res;
+  }
+
+  duplicateNotificationTemplate(
+    id: string,
+    newName?: string
+  ): { success: boolean; template?: NotificationTemplate; error?: string } {
+    const res = NotificationService.duplicateTemplate(id, newName, this.currentAdmin.name);
+    if (res.success && res.template) {
+      this.logAction('DUPLICATE_TEMPLATE', 'notification', res.template.id, {
+        sourceId: id,
+        name: res.template.name,
+      });
+    }
+    return res;
+  }
+
+  deleteNotificationTemplate(id: string): { success: boolean; error?: string } {
+    const target = NotificationService.getTemplateById(id);
+    const res = NotificationService.deleteCustomTemplate(id);
+    if (res.success) {
+      this.logAction('DELETE_TEMPLATE', 'notification', id, {
+        name: target?.name,
+      });
+    }
+    return res;
+  }
+
+  renderNotificationTemplate(
+    template: NotificationTemplate,
+    variables: Record<string, string>
+  ): TemplateRenderResult {
+    return NotificationService.renderTemplate(template, variables);
   }
 
   // --- Feature Flags ---

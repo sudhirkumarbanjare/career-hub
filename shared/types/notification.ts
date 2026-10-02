@@ -82,3 +82,36 @@ export interface NotificationCampaign {
   createdAt: string;
 }
 
+export type NotificationTemplateApp = 'student' | 'client' | 'admin' | 'all';
+export type NotificationTemplateStatus = 'active' | 'inactive';
+
+export interface NotificationTemplate {
+  id: string;
+  app: NotificationTemplateApp;
+  name: string;
+  title: string;
+  body: string;
+  category: NotificationCategory;
+  deepLink?: string;
+  imageUrl?: string;
+  variables: string[]; // e.g., ['student_name', 'job_title', 'company_name']
+  isSystem: boolean; // true for predefined templates, false for custom
+  isPredefined?: boolean; // alias for isSystem
+  targetRole?: string;
+  status: NotificationTemplateStatus;
+  targetAudienceDefault?: NotificationTarget;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  createdByUid?: string;
+}
+
+export interface TemplateRenderResult {
+  renderedTitle: string;
+  renderedBody: string;
+  unresolvedVariables: string[];
+  missingVariables: string[];
+  hasUnrenderedPlaceholders: boolean;
+  isValid: boolean;
+}
+
