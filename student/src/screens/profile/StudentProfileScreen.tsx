@@ -65,9 +65,9 @@ export const StudentProfileScreen: React.FC<StudentProfileScreenProps> = ({
   const handleShareApp = async () => {
     try {
       await Share.share({
-        title: 'GoTechPlace Student Portal',
+        title: 'GoTechPlace Student App',
         message:
-          '🎓 Join GoTechPlace — Book verified IEEE engineering projects, get certified, and apply for top client internships!\n\nExplore: https://gotechplace.com',
+          '🎓 Join GoTechPlace — Book verified IEEE engineering projects, get certified, and apply for top client internships!\n\nDownload the Student App on Google Play Store:\nhttps://play.google.com/store/apps/details?id=com.gotechplace.student',
       });
     } catch (err: any) {
       console.log('Share error:', err);

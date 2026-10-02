@@ -24,6 +24,18 @@ function validateOtp(otp) {
   return /^\d{6}$/.test(otp.trim());
 }
 
+function maskPhoneNumber(phone) {
+  const digits = phone.replace(/\D/g, '');
+  let tenDigits = digits;
+  if (digits.length === 12 && digits.startsWith('91')) {
+    tenDigits = digits.substring(2);
+  }
+  if (tenDigits.length === 10) {
+    return `+91 ${tenDigits.slice(0, 2)}******${tenDigits.slice(8)}`;
+  }
+  return phone;
+}
+
 function canPostJob(clientProfile, user) {
   if (!user || user.status === 'suspended') {
     return { allowed: false, reason: 'Account is suspended.' };
@@ -66,6 +78,13 @@ describe('Authentication & Phone OTP Validation Engine', () => {
     assert.equal(validateOtp('12345'), false); // 5 digits
     assert.equal(validateOtp('1234567'), false); // 7 digits
     assert.equal(validateOtp('12345a'), false); // alphanumeric
+  });
+
+  test('masks phone numbers securely for privacy (e.g. 9999999999 and 9971754470)', () => {
+    assert.equal(maskPhoneNumber('9999999999'), '+91 99******99');
+    assert.equal(maskPhoneNumber('+91 9999999999'), '+91 99******99');
+    assert.equal(maskPhoneNumber('9971754470'), '+91 99******70');
+    assert.equal(maskPhoneNumber('+91 9971754470'), '+91 99******70');
   });
 
   test('guards client job posting behind verified approval state', () => {

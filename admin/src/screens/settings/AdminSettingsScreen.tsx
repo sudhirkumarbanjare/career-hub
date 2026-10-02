@@ -7,7 +7,6 @@ import {
   Switch,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import {
   COLORS,
@@ -16,6 +15,7 @@ import {
   Header,
   Card,
   Button,
+  SuccessModal,
   SystemSettings,
   FeatureFlag,
 } from '@gotechplace/shared';
@@ -46,6 +46,7 @@ export const AdminSettingsScreen: React.FC<AdminSettingsScreenProps> = ({
   const [reqClientApproval, setReqClientApproval] = useState(settings.requireClientApproval);
   const [reqJobApproval, setReqJobApproval] = useState(settings.requireJobApproval);
   const [saving, setSaving] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
 
   const handleToggleFeatureFlag = (flagId: string) => {
     AdminService.toggleFeatureFlag(flagId);
@@ -64,7 +65,7 @@ export const AdminSettingsScreen: React.FC<AdminSettingsScreenProps> = ({
     });
     setSettings(updated);
     setSaving(false);
-    Alert.alert('Settings Updated', 'Platform global settings and governance rules have been saved.');
+    setSuccessModalVisible(true);
   };
 
   return (
@@ -257,6 +258,13 @@ export const AdminSettingsScreen: React.FC<AdminSettingsScreenProps> = ({
           </Card>
         )}
       </ScrollView>
+
+      <SuccessModal
+        visible={successModalVisible}
+        title="Settings Updated"
+        message="Platform global settings and governance rules have been saved successfully."
+        onConfirm={() => setSuccessModalVisible(false)}
+      />
     </View>
   );
 };

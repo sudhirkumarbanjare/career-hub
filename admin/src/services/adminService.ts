@@ -6,7 +6,9 @@ import {
   JobApplication,
   AppNotification,
   NotificationCampaign,
+  NotificationCategory,
   NotificationTarget,
+  NotificationService,
   AppVersionConfig,
   AppId,
   AuditLogEntry,
@@ -510,6 +512,12 @@ class AdminServiceManager {
       u.status = 'active';
     }
 
+    // Trigger automatic push notification to client
+    NotificationService.generateAutomaticNotification('CLIENT_APPROVED', {
+      recipientUid: client.uid,
+      companyName: client.companyName,
+    });
+
     this.logAction('APPROVE_CLIENT', 'client', client.uid, { companyName: client.companyName });
     return true;
   }
@@ -522,6 +530,13 @@ class AdminServiceManager {
     client.rejectionReason = reason;
     client.rejectedBy = this.currentAdmin.uid;
     client.rejectedAt = new Date().toISOString();
+
+    // Trigger automatic push notification to client with feedback
+    NotificationService.generateAutomaticNotification('CLIENT_REJECTED', {
+      recipientUid: client.uid,
+      companyName: client.companyName,
+      reason,
+    });
 
     this.logAction('REJECT_CLIENT', 'client', client.uid, { companyName: client.companyName, reason });
     return true;
@@ -545,6 +560,26 @@ class AdminServiceManager {
     job.approvedBy = this.currentAdmin.uid;
     job.approvedAt = new Date().toISOString();
 
+    // 1. Trigger notification to Employer
+    NotificationService.generateAutomaticNotification('JOB_APPROVED', {
+      recipientUid: job.clientId || 'system',
+      jobId: job.id,
+      jobTitle: job.title,
+    });
+
+    // 2. Trigger notification broadcast to Students
+    const company = job.company || job.clientName || 'Company';
+    NotificationService.createCampaignPayload(
+      '💼 New Verified Job Opening!',
+      `${job.title} at ${company} (${job.category || 'General'}) is now open for applications.`,
+      'student_app',
+      { uid: this.currentAdmin.uid, name: 'System Moderation' },
+      {
+        category: 'jobs',
+        deepLink: `gotechplace://student/job/${job.id}`,
+      }
+    );
+
     this.logAction('APPROVE_JOB', 'job', job.id, { title: job.title });
     return true;
   }
@@ -558,6 +593,14 @@ class AdminServiceManager {
     job.rejectionReason = reason;
     job.rejectedBy = this.currentAdmin.uid;
     job.rejectedAt = new Date().toISOString();
+
+    // Trigger feedback notification to Employer
+    NotificationService.generateAutomaticNotification('JOB_REJECTED', {
+      recipientUid: job.clientId || 'system',
+      jobId: job.id,
+      jobTitle: job.title,
+      reason,
+    });
 
     this.logAction('REJECT_JOB', 'job', job.id, { title: job.title, reason });
     return true;
@@ -697,25 +740,32 @@ class AdminServiceManager {
     message: string,
     target: NotificationTarget,
     imageUrl?: string,
-    deepLink?: string
+    deepLink?: string,
+    category?: NotificationCategory,
+    targetUserIds?: string[]
   ): NotificationCampaign {
-    const campaign: NotificationCampaign = {
-      id: `camp_${Date.now()}`,
+    const knownCounts = {
+      students: this.users.filter((u) => u.role === 'student').length || 1450,
+      clients: this.users.filter((u) => u.role === 'client').length || 320,
+      admins: this.users.filter((u) => ['superuser', 'admin', 'staff', 'moderator'].includes(u.role)).length || 35,
+    };
+
+    const campaign = NotificationService.createCampaignPayload(
       title,
       message,
       target,
-      imageUrl,
-      deepLink,
-      sentBy: this.currentAdmin.uid,
-      sentByName: this.currentAdmin.name,
-      status: 'sent',
-      sentAt: new Date().toISOString(),
-      recipientCount: target === 'student_app' ? 1450 : target === 'client_app' ? 320 : 1800,
-      createdAt: new Date().toISOString(),
-    };
+      { uid: this.currentAdmin.uid, name: this.currentAdmin.name },
+      {
+        category,
+        imageUrl,
+        deepLink,
+        targetUserIds,
+        knownCounts,
+      }
+    );
 
     this.campaigns.unshift(campaign);
-    this.logAction('SEND_NOTIFICATION', 'notification', campaign.id, { title, target });
+    this.logAction('SEND_NOTIFICATION', 'notification', campaign.id, { title, target, category });
     return campaign;
   }
 
@@ -788,6 +838,10 @@ class AdminServiceManager {
     this.adminNotifications.forEach((n) => {
       n.read = true;
     });
+  }
+
+  clearAllAdminNotifications() {
+    this.adminNotifications = [];
   }
 
   deleteAdminNotification(id: string) {

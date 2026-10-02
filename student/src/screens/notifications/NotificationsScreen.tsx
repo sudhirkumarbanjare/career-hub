@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import {
   COLORS,
@@ -18,6 +17,7 @@ import {
   Badge,
   formatRelativeTime,
   AppNotification,
+  ConfirmationModal,
 } from '@gotechplace/shared';
 import { StudentService } from '../../services/studentService';
 
@@ -34,6 +34,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
     StudentService.getNotifications()
   );
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [clearConfirmVisible, setClearConfirmVisible] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -56,21 +57,13 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
   };
 
   const handleClearAll = () => {
-    Alert.alert(
-      'Clear All Notifications',
-      'Are you sure you want to remove all notifications?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear All',
-          style: 'destructive',
-          onPress: () => {
-            StudentService.clearAllNotifications();
-            setNotifications([]);
-          },
-        },
-      ]
-    );
+    setClearConfirmVisible(true);
+  };
+
+  const confirmClearAll = () => {
+    StudentService.clearAllNotifications();
+    setNotifications([]);
+    setClearConfirmVisible(false);
   };
 
   const displayedNotifications =
@@ -190,6 +183,18 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
             </Card>
           </TouchableOpacity>
         )}
+      />
+
+      <ConfirmationModal
+        visible={clearConfirmVisible}
+        title="Clear All Notifications"
+        message="Are you sure you want to remove all notifications? This action cannot be undone."
+        confirmText="Clear All"
+        cancelText="Cancel"
+        isDestructive
+        icon="🗑️"
+        onConfirm={confirmClearAll}
+        onCancel={() => setClearConfirmVisible(false)}
       />
     </View>
   );

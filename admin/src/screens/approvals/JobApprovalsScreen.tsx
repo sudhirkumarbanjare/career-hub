@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   TextInput,
 } from 'react-native';
 import {
@@ -22,6 +21,9 @@ import {
   Job,
   formatCurrency,
   formatRelativeDate,
+  ConfirmationModal,
+  SuccessModal,
+  ErrorModal,
 } from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
@@ -40,6 +42,12 @@ export const JobApprovalsScreen: React.FC<JobApprovalsScreenProps> = ({
   const [rejectReason, setRejectReason] = useState('');
   const [previewJob, setPreviewJob] = useState<Job | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Modals state
+  const [approveTargetJob, setApproveTargetJob] = useState<Job | null>(null);
+  const [deleteTargetJob, setDeleteTargetJob] = useState<Job | null>(null);
+  const [successModalConfig, setSuccessModalConfig] = useState<{ title: string; message: string } | null>(null);
+  const [errorModalMsg, setErrorModalMsg] = useState<string | null>(null);
 
   const loadData = () => {
     const all = AdminService.getAllJobs();
@@ -65,26 +73,24 @@ export const JobApprovalsScreen: React.FC<JobApprovalsScreenProps> = ({
   });
 
   const handleApprove = (job: Job) => {
-    Alert.alert(
-      'Approve Job Posting',
-      `Approve "${job.title}" by ${job.clientName}? This job will immediately become visible to all students in the marketplace.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Approve & Publish',
-          onPress: () => {
-            setActionLoading(true);
-            AdminService.approveJob(job.id);
-            loadData();
-            setActionLoading(false);
-            if (previewJob?.id === job.id) {
-              setPreviewJob(null);
-            }
-            Alert.alert('Published', `Job "${job.title}" is now active in the student marketplace.`);
-          },
-        },
-      ]
-    );
+    setApproveTargetJob(job);
+  };
+
+  const confirmApproveJob = () => {
+    if (!approveTargetJob) return;
+    const job = approveTargetJob;
+    setApproveTargetJob(null);
+    setActionLoading(true);
+    AdminService.approveJob(job.id);
+    loadData();
+    setActionLoading(false);
+    if (previewJob?.id === job.id) {
+      setPreviewJob(null);
+    }
+    setSuccessModalConfig({
+      title: 'Job Published',
+      message: `Job "${job.title}" is now active in the student marketplace.`,
+    });
   };
 
   const openRejectDialog = (jobId: string) => {
@@ -96,7 +102,7 @@ export const JobApprovalsScreen: React.FC<JobApprovalsScreenProps> = ({
   const handleConfirmReject = () => {
     if (!rejectTargetId) return;
     if (!rejectReason.trim()) {
-      Alert.alert('Reason Required', 'Please provide a constructive reason for rejecting this job listing.');
+      setErrorModalMsg('Please provide a constructive reason for rejecting this job listing.');
       return;
     }
 
@@ -110,28 +116,29 @@ export const JobApprovalsScreen: React.FC<JobApprovalsScreenProps> = ({
     if (previewJob?.id === rejectTargetId) {
       setPreviewJob(null);
     }
-    Alert.alert('Listing Rejected', 'The employer has been notified with your feedback.');
+    setSuccessModalConfig({
+      title: 'Listing Rejected',
+      message: 'The employer has been notified with your feedback.',
+    });
   };
 
   const handleDeleteJob = (job: Job) => {
-    Alert.alert(
-      'Delete Listing',
-      `Are you sure you want to permanently delete "${job.title}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            AdminService.deleteJob(job.id);
-            loadData();
-            if (previewJob?.id === job.id) {
-              setPreviewJob(null);
-            }
-          },
-        },
-      ]
-    );
+    setDeleteTargetJob(job);
+  };
+
+  const confirmDeleteJob = () => {
+    if (!deleteTargetJob) return;
+    const job = deleteTargetJob;
+    setDeleteTargetJob(null);
+    AdminService.deleteJob(job.id);
+    loadData();
+    if (previewJob?.id === job.id) {
+      setPreviewJob(null);
+    }
+    setSuccessModalConfig({
+      title: 'Listing Deleted',
+      message: `Job "${job.title}" has been permanently removed.`,
+    });
   };
 
   return (
@@ -403,6 +410,56 @@ export const JobApprovalsScreen: React.FC<JobApprovalsScreenProps> = ({
           </ScrollView>
         )}
       </Modal>
+
+      {/* Approve Confirmation Modal */}
+      {approveTargetJob && (
+        <ConfirmationModal
+          visible={!!approveTargetJob}
+          title="Approve Job Posting"
+          message={`Approve "${approveTargetJob.title}" by ${approveTargetJob.clientName}? This job will immediately become visible to all students in the marketplace.`}
+          confirmText="Approve & Publish"
+          cancelText="Cancel"
+          icon="💼"
+          onConfirm={confirmApproveJob}
+          onCancel={() => setApproveTargetJob(null)}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTargetJob && (
+        <ConfirmationModal
+          visible={!!deleteTargetJob}
+          title="Delete Listing"
+          message={`Are you sure you want to permanently delete "${deleteTargetJob.title}"? This cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          isDestructive
+          icon="🗑️"
+          onConfirm={confirmDeleteJob}
+          onCancel={() => setDeleteTargetJob(null)}
+        />
+      )}
+
+      {/* Success Modal */}
+      {successModalConfig && (
+        <SuccessModal
+          visible={!!successModalConfig}
+          title={successModalConfig.title}
+          message={successModalConfig.message}
+          buttonText="Done"
+          onClose={() => setSuccessModalConfig(null)}
+        />
+      )}
+
+      {/* Error Modal */}
+      {errorModalMsg && (
+        <ErrorModal
+          visible={!!errorModalMsg}
+          title="Reason Required"
+          message={errorModalMsg}
+          onClose={() => setErrorModalMsg(null)}
+        />
+      )}
     </View>
   );
 };

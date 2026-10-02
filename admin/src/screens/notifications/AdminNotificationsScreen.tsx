@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import {
   COLORS,
@@ -16,6 +15,7 @@ import {
   Card,
   formatRelativeTime,
   AppNotification,
+  ConfirmationModal,
 } from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
@@ -34,6 +34,7 @@ export const AdminNotificationsScreen: React.FC<AdminNotificationsScreenProps> =
     AdminService.getAdminNotifications()
   );
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [clearConfirmVisible, setClearConfirmVisible] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -56,21 +57,13 @@ export const AdminNotificationsScreen: React.FC<AdminNotificationsScreenProps> =
   };
 
   const handleClearAll = () => {
-    Alert.alert(
-      'Clear System Alerts',
-      'Are you sure you want to dismiss all alerts?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear All',
-          style: 'destructive',
-          onPress: () => {
-            AdminService.clearAllAdminNotifications();
-            setNotifications([]);
-          },
-        },
-      ]
-    );
+    setClearConfirmVisible(true);
+  };
+
+  const confirmClearAll = () => {
+    AdminService.clearAllAdminNotifications();
+    setNotifications([]);
+    setClearConfirmVisible(false);
   };
 
   const displayedNotifications =
@@ -187,6 +180,18 @@ export const AdminNotificationsScreen: React.FC<AdminNotificationsScreenProps> =
             </Card>
           </TouchableOpacity>
         )}
+      />
+
+      <ConfirmationModal
+        visible={clearConfirmVisible}
+        title="Clear System Alerts"
+        message="Are you sure you want to dismiss all platform alerts? This cannot be undone."
+        confirmText="Clear All"
+        cancelText="Cancel"
+        isDestructive
+        icon="🗑️"
+        onConfirm={confirmClearAll}
+        onCancel={() => setClearConfirmVisible(false)}
       />
     </View>
   );

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Switch,
-  Alert,
 } from 'react-native';
 import {
   COLORS,
@@ -20,6 +19,8 @@ import {
   Modal,
   Category,
   formatRelativeDate,
+  SuccessModal,
+  ErrorModal,
 } from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
@@ -35,6 +36,8 @@ export const AdminCategoriesScreen: React.FC<AdminCategoriesScreenProps> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const loadData = () => {
     setCategories(AdminService.getCategories());
@@ -51,18 +54,19 @@ export const AdminCategoriesScreen: React.FC<AdminCategoriesScreenProps> = ({
 
   const handleCreate = () => {
     if (!name.trim()) {
-      Alert.alert('Required', 'Please enter a category name.');
+      setErrorMsg('Please enter a category name.');
       return;
     }
 
+    const createdName = name.trim();
     setSaving(true);
-    AdminService.createCategory(name.trim(), description.trim());
+    AdminService.createCategory(createdName, description.trim());
     loadData();
     setSaving(false);
     setModalVisible(false);
     setName('');
     setDescription('');
-    Alert.alert('Category Added', `Category "${name}" is now available in project & job listings.`);
+    setSuccessMsg(`Category "${createdName}" is now available in project & job listings.`);
   };
 
   return (
@@ -157,6 +161,27 @@ export const AdminCategoriesScreen: React.FC<AdminCategoriesScreenProps> = ({
           />
         </View>
       </Modal>
+
+      {/* Success Modal */}
+      {successMsg && (
+        <SuccessModal
+          visible={!!successMsg}
+          title="Category Added"
+          message={successMsg}
+          buttonText="Done"
+          onClose={() => setSuccessMsg(null)}
+        />
+      )}
+
+      {/* Error Modal */}
+      {errorMsg && (
+        <ErrorModal
+          visible={!!errorMsg}
+          title="Required Field"
+          message={errorMsg}
+          onClose={() => setErrorMsg(null)}
+        />
+      )}
     </View>
   );
 };

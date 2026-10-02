@@ -7,6 +7,8 @@ import {
   Text,
   TouchableOpacity,
   Linking,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import {
   COLORS,
@@ -16,6 +18,8 @@ import {
   ClientProfile,
   VersionCheckService,
   VersionCheckResult,
+  DeviceService,
+  AnalyticsService,
 } from '@gotechplace/shared';
 
 import { ClientService } from './services/clientService';
@@ -45,12 +49,44 @@ export const ClientApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'jobs' | 'applications' | 'profile'>('dashboard');
   const [stackScreen, setStackScreen] = useState<{ name: string; params?: any } | null>(null);
 
-  // Run startup version check
+  // Run startup version check & device registration
   useEffect(() => {
     const config = VersionCheckService.getDefaultConfig('client');
     const result = VersionCheckService.evaluate('1.0.0', config);
     setVersionStatus(result);
+
+    DeviceService.registerAppLaunch({
+      appId: 'client',
+      appName: 'GoTechPlace Employer / Client',
+      appVersion: '1.0.0',
+      uid: user?.uid,
+      role: 'client',
+    });
+
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        DeviceService.recordAppForeground();
+      } else if (nextAppState === 'background' || nextAppState === 'inactive') {
+        DeviceService.recordAppBackground();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
+
+  const handleLogout = () => {
+    if (user) {
+      DeviceService.recordLogout(user.uid);
+    }
+    ClientService.clearSession();
+    setUser(null);
+    setClientProfile(null);
+    setOtpSession(null);
+    setActiveTab('dashboard');
+    setStackScreen(null);
+  };
 
   // 1. Force Update Screen
   if (versionStatus?.needsForceUpdate) {
@@ -97,6 +133,7 @@ export const ClientApp: React.FC = () => {
               setUser(verifiedUser);
               const profile = ClientService.initDefaultClient(verifiedUser);
               setClientProfile(profile);
+              DeviceService.recordLogin(verifiedUser.uid, 'client');
             }}
           />
         </SafeAreaView>
@@ -107,6 +144,7 @@ export const ClientApp: React.FC = () => {
       <SafeAreaView style={styles.safeArea}>
         <ClientPhoneLoginScreen
           onOtpRequested={(verificationId, phone) => {
+            AnalyticsService.logAuthEvent('started', 'client');
             setOtpSession({ verificationId, phone });
           }}
         />
@@ -119,7 +157,10 @@ export const ClientApp: React.FC = () => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <ClientProfileSetupScreen
-          onComplete={(profile) => setClientProfile(profile)}
+          onComplete={(profile) => {
+            AnalyticsService.logEvent('profile_completed', { app_role: 'client' });
+            setClientProfile(profile);
+          }}
         />
       </SafeAreaView>
     );
@@ -132,14 +173,7 @@ export const ClientApp: React.FC = () => {
         <PendingApprovalScreen
           client={clientProfile}
           onRefresh={() => setClientProfile({ ...ClientService.getCurrentClient() })}
-          onLogout={() => {
-            ClientService.clearSession();
-            setUser(null);
-            setClientProfile(null);
-            setOtpSession(null);
-            setActiveTab('dashboard');
-            setStackScreen(null);
-          }}
+          onLogout={handleLogout}
         />
       </SafeAreaView>
     );
@@ -218,14 +252,7 @@ export const ClientApp: React.FC = () => {
         return (
           <ClientProfileScreen
             onNavigateToNotifications={() => setStackScreen({ name: 'notifications' })}
-            onLogout={() => {
-              ClientService.clearSession();
-              setUser(null);
-              setClientProfile(null);
-              setOtpSession(null);
-              setActiveTab('dashboard');
-              setStackScreen(null);
-            }}
+            onLogout={handleLogout}
           />
         );
     }

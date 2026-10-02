@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Modal,
 } from 'react-native';
 import {
@@ -25,6 +24,9 @@ import {
   BRANCHES,
   PROJECT_TYPES,
   DIFFICULTIES,
+  ConfirmationModal,
+  SuccessModal,
+  ErrorModal,
 } from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
@@ -55,6 +57,11 @@ export const AdminProjectsScreen: React.FC<AdminProjectsScreenProps> = ({ onBack
   const [formCapacity, setFormCapacity] = useState('25');
   const [formTechs, setFormTechs] = useState('ESP32, 4-Channel Relay, Mobile App (Blynk), Wi-Fi Module');
   const [formImage, setFormImage] = useState('/images/projects/1.webp');
+
+  // Modal states
+  const [deleteTargetProject, setDeleteTargetProject] = useState<Project | null>(null);
+  const [successModalMsg, setSuccessModalMsg] = useState<string | null>(null);
+  const [errorModalMsg, setErrorModalMsg] = useState<string | null>(null);
 
   const loadData = () => {
     const list = AdminService.getAllProjects();
@@ -101,7 +108,7 @@ export const AdminProjectsScreen: React.FC<AdminProjectsScreenProps> = ({ onBack
 
   const handleSave = () => {
     if (!formTitle.trim()) {
-      Alert.alert('Validation Error', 'Project title is required.');
+      setErrorModalMsg('Project title is required.');
       return;
     }
 
@@ -129,10 +136,10 @@ export const AdminProjectsScreen: React.FC<AdminProjectsScreenProps> = ({ onBack
 
     if (editingProjectId) {
       AdminService.updateProject(editingProjectId, projectData);
-      Alert.alert('Success', 'Project updated successfully.');
+      setSuccessModalMsg('Project updated successfully.');
     } else {
       AdminService.createProject(projectData);
-      Alert.alert('Success', 'New project created successfully.');
+      setSuccessModalMsg('New project created successfully.');
     }
 
     setIsModalVisible(false);
@@ -140,21 +147,16 @@ export const AdminProjectsScreen: React.FC<AdminProjectsScreenProps> = ({ onBack
   };
 
   const handleDelete = (p: Project) => {
-    Alert.alert(
-      'Delete Project',
-      `Are you sure you want to delete "${p.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            AdminService.deleteProject(p.project_id);
-            loadData();
-          },
-        },
-      ]
-    );
+    setDeleteTargetProject(p);
+  };
+
+  const confirmDeleteProject = () => {
+    if (!deleteTargetProject) return;
+    const p = deleteTargetProject;
+    setDeleteTargetProject(null);
+    AdminService.deleteProject(p.project_id);
+    loadData();
+    setSuccessModalMsg(`Project "${p.title}" deleted.`);
   };
 
   const handleToggleAvailability = (p: Project) => {
@@ -469,6 +471,42 @@ export const AdminProjectsScreen: React.FC<AdminProjectsScreenProps> = ({ onBack
           </View>
         </View>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      {deleteTargetProject && (
+        <ConfirmationModal
+          visible={!!deleteTargetProject}
+          title="Delete Project"
+          message={`Are you sure you want to permanently delete "${deleteTargetProject.title}"? This cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          isDestructive
+          icon="🗑️"
+          onConfirm={confirmDeleteProject}
+          onCancel={() => setDeleteTargetProject(null)}
+        />
+      )}
+
+      {/* Success Modal */}
+      {successModalMsg && (
+        <SuccessModal
+          visible={!!successModalMsg}
+          title="Success"
+          message={successModalMsg}
+          buttonText="Done"
+          onClose={() => setSuccessModalMsg(null)}
+        />
+      )}
+
+      {/* Error Modal */}
+      {errorModalMsg && (
+        <ErrorModal
+          visible={!!errorModalMsg}
+          title="Validation Error"
+          message={errorModalMsg}
+          onClose={() => setErrorModalMsg(null)}
+        />
+      )}
     </View>
   );
 };

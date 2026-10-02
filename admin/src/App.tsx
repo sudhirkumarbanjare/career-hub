@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -6,7 +6,8 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Alert,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import {
   COLORS,
@@ -15,6 +16,11 @@ import {
   User,
   Modal,
   Badge,
+  ConfirmationModal,
+  ErrorModal,
+  ModalProvider,
+  DeviceService,
+  AnalyticsService,
 } from '@gotechplace/shared';
 import { AdminService } from './services/adminService';
 import { AdminPhoneLoginScreen } from './screens/auth/AdminPhoneLoginScreen';
@@ -56,37 +62,62 @@ export const App: React.FC = () => {
   const [adminUser, setAdminUser] = useState<User>(AdminService.getCurrentAdmin());
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [menuModalVisible, setMenuModalVisible] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [accessDeniedVisible, setAccessDeniedVisible] = useState(false);
+
+  // Initialize installation and lifecycle listeners
+  useEffect(() => {
+    DeviceService.registerAppLaunch({
+      appId: 'admin',
+      appName: 'GoTechPlace Admin Console',
+      appVersion: '1.0.0',
+      uid: adminUser?.uid,
+      role: adminUser?.role || 'admin',
+    });
+
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        DeviceService.recordAppForeground();
+      } else if (nextAppState === 'background' || nextAppState === 'inactive') {
+        DeviceService.recordAppBackground();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Authentication Flow
   const handlePhoneSubmit = (phone: string) => {
     setPhoneNumber(phone);
+    AnalyticsService.logAuthEvent('started', 'admin');
     setAuthStage('otp');
   };
 
   const handleOtpVerified = (user: User) => {
     if (user.role !== 'superuser' && user.role !== 'admin' && user.role !== 'moderator') {
-      Alert.alert('Access Denied', 'This phone number does not have administrative privileges.');
+      AnalyticsService.logAuthEvent('failed', user.role || 'unauthorized', 'permission_denied');
+      setAccessDeniedVisible(true);
       setAuthStage('login');
       return;
     }
     setAdminUser(user);
     AdminService.setAdminSession(user);
+    DeviceService.recordLogin(user.uid, user.role);
     setAuthStage('authenticated');
   };
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to end your administrative session?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: () => {
-          setAuthStage('login');
-          setActiveTab('dashboard');
-          setMenuModalVisible(false);
-        },
-      },
-    ]);
+    setLogoutModalVisible(true);
+  };
+
+  const confirmLogout = () => {
+    DeviceService.recordLogout(adminUser.uid);
+    setLogoutModalVisible(false);
+    setAuthStage('login');
+    setActiveTab('dashboard');
+    setMenuModalVisible(false);
   };
 
   if (authStage === 'login') {
@@ -439,6 +470,28 @@ export const App: React.FC = () => {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        visible={logoutModalVisible}
+        title="Logout"
+        message="Are you sure you want to end your administrative session?"
+        confirmText="Log Out"
+        cancelText="Cancel"
+        isDestructive
+        icon="🚪"
+        onConfirm={confirmLogout}
+        onCancel={() => setLogoutModalVisible(false)}
+      />
+
+      {/* Access Denied Modal */}
+      <ErrorModal
+        visible={accessDeniedVisible}
+        title="Access Denied"
+        message="This phone number does not have administrative privileges."
+        buttonText="Back to Login"
+        onClose={() => setAccessDeniedVisible(false)}
+      />
     </SafeAreaView>
   );
 };

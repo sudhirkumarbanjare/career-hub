@@ -28,6 +28,18 @@ export function validateOtp(otp: string): boolean {
   return /^\d{6}$/.test(otp.trim());
 }
 
+export function maskPhoneNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  let tenDigits = digits;
+  if (digits.length === 12 && digits.startsWith('91')) {
+    tenDigits = digits.substring(2);
+  }
+  if (tenDigits.length === 10) {
+    return `+91 ${tenDigits.slice(0, 2)}******${tenDigits.slice(8)}`;
+  }
+  return phone;
+}
+
 export function validateJob(data: {
   title?: string;
   description?: string;

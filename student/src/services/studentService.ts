@@ -7,6 +7,7 @@ import {
   JobApplication,
   StudentProfile,
   AppNotification,
+  NotificationService,
   User,
 } from '@gotechplace/shared';
 import {
@@ -144,7 +145,7 @@ class StudentServiceManager {
       (safeUpdates.branch || current.branch)
     );
 
-    this.currentStudent = {
+    const updatedStudent: StudentProfile = {
       ...current,
       ...safeUpdates,
       mobile: current.mobile, // STRICT IMMUTABILITY: Retain verified phone number
@@ -154,8 +155,9 @@ class StudentServiceManager {
       updatedAt: new Date().toISOString(),
     };
 
-    this.profilesByUid.set(this.currentStudent.uid, this.currentStudent);
-    return this.currentStudent;
+    this.currentStudent = updatedStudent;
+    this.profilesByUid.set(updatedStudent.uid, updatedStudent);
+    return updatedStudent;
   }
 
   clearSession(): void {
@@ -209,6 +211,12 @@ class StudentServiceManager {
     };
 
     this.bookings.unshift(booking);
+
+    // Trigger automatic notification for project reservation
+    NotificationService.generateAutomaticNotification('PROJECT_BOOKED', {
+      recipientUid: student.uid,
+    });
+
     return { success: true, booking };
   }
 
@@ -267,6 +275,12 @@ class StudentServiceManager {
     };
 
     this.enrollments.unshift(enrollment);
+
+    // Trigger automatic notification for course enrollment
+    NotificationService.generateAutomaticNotification('COURSE_ENROLLED', {
+      recipientUid: student.uid,
+    });
+
     return { success: true, enrollment };
   }
 

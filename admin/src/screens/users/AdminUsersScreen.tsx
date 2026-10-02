@@ -21,9 +21,13 @@ import {
   ConfirmDialog,
   Modal,
   formatDate,
+  formatRelativeDate,
   User,
+  DeviceRecord,
+  DeviceService,
 } from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
+import { AdminDeviceDetailsScreen } from './AdminDeviceDetailsScreen';
 
 export interface AdminUsersScreenProps {
   onBack: () => void;
@@ -48,6 +52,12 @@ export const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({
 
   // Detail Modal
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [inspectingDevice, setInspectingDevice] = useState<DeviceRecord | null>(null);
+
+  const selectedUserDevices = useMemo(() => {
+    if (!selectedUser) return [];
+    return DeviceService.getUserDevices(selectedUser.uid);
+  }, [selectedUser]);
 
   const filteredUsers = useMemo(() => {
     return AdminService.getUsers({
@@ -222,6 +232,43 @@ export const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({
               <Text style={styles.detailVal}>{selectedUser.uid}</Text>
             </View>
 
+            {/* Registered Devices List */}
+            <View style={styles.devicesSection}>
+              <Text style={styles.devicesSectionTitle}>
+                📱 Registered Devices ({selectedUserDevices.length})
+              </Text>
+              {selectedUserDevices.length === 0 ? (
+                <Text style={styles.noDevicesText}>No active device sessions registered.</Text>
+              ) : (
+                selectedUserDevices.map((dev) => (
+                  <TouchableOpacity
+                    key={dev.deviceId}
+                    style={styles.deviceMiniCard}
+                    onPress={() => setInspectingDevice(dev)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.deviceMiniName}>{dev.displayName}</Text>
+                      <Text style={styles.deviceMiniSub}>
+                        {dev.appName} v{dev.appVersion} • Android {dev.osVersion}
+                      </Text>
+                      <Text style={styles.deviceMiniActive}>
+                        Last active: {formatRelativeDate(dev.lastActiveAt)}
+                      </Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                      <Badge
+                        label={dev.sessionStatus === 'active' ? 'ONLINE' : 'OFFLINE'}
+                        variant={dev.sessionStatus === 'active' ? 'success' : 'gray'}
+                        size="sm"
+                      />
+                      <Text style={styles.viewDeviceLink}>Details →</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+
             {selectedUser.role !== 'superuser' ? (
               <Button
                 title={selectedUser.status === 'active' ? 'SUSPEND THIS USER' : 'ACTIVATE USER ACCOUNT'}
@@ -237,6 +284,25 @@ export const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({
             ) : null}
           </View>
         </Modal>
+      )}
+
+      {/* Full Device Details View */}
+      {inspectingDevice && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <AdminDeviceDetailsScreen
+            device={inspectingDevice}
+            onBack={() => setInspectingDevice(null)}
+            onDeviceUpdated={() => {
+              if (selectedUser) {
+                const refreshed = DeviceService.getDeviceDetails(
+                  inspectingDevice.uid,
+                  inspectingDevice.deviceId
+                );
+                if (refreshed) setInspectingDevice(refreshed);
+              }
+            }}
+          />
+        </View>
       )}
 
       {/* Confirmation Dialog for Suspension */}
@@ -380,5 +446,55 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.sizes.sm,
     fontWeight: TYPOGRAPHY.weights.semibold,
     color: COLORS.gray[800],
+  },
+  devicesSection: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gray[200],
+  },
+  devicesSectionTitle: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.gray[900],
+    marginBottom: SPACING.xs,
+  },
+  noDevicesText: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    color: COLORS.gray[500],
+    fontStyle: 'italic',
+    paddingVertical: SPACING.xs,
+  },
+  deviceMiniCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.gray[50],
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    marginVertical: 4,
+  },
+  deviceMiniName: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.gray[900],
+  },
+  deviceMiniSub: {
+    fontSize: 10,
+    color: COLORS.gray[600],
+    marginTop: 1,
+  },
+  deviceMiniActive: {
+    fontSize: 9,
+    color: COLORS.brand[700],
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  viewDeviceLink: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: COLORS.brand[600],
   },
 });

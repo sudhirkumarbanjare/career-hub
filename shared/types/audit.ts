@@ -10,6 +10,9 @@ export type AuditAction =
   | 'APPROVE_JOB'
   | 'REJECT_JOB'
   | 'DELETE_JOB'
+  | 'CREATE_PROJECT'
+  | 'UPDATE_PROJECT'
+  | 'DELETE_PROJECT'
   | 'SEND_NOTIFICATION'
   | 'CREATE_APP_VERSION'
   | 'UPDATE_APP_VERSION'
@@ -31,7 +34,7 @@ export interface AuditLogEntry {
   adminName: string;
   action: AuditAction;
   targetId?: string;
-  targetType: 'job' | 'user' | 'client' | 'student' | 'staff' | 'version' | 'setting' | 'category' | 'report' | 'notification';
+  targetType: 'job' | 'user' | 'client' | 'student' | 'staff' | 'version' | 'setting' | 'category' | 'report' | 'notification' | 'project';
   timestamp: string;
   metadata?: Record<string, any>;
   ipAddress?: string;

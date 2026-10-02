@@ -7,3 +7,4 @@ export * from './notification';
 export * from './version';
 export * from './rbac';
 export * from './audit';
+export * from './device';

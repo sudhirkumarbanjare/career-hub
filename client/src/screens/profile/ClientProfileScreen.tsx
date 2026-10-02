@@ -72,9 +72,9 @@ export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({
   const handleShareApp = async () => {
     try {
       await Share.share({
-        title: 'GoTechPlace Client & Employer Portal',
+        title: 'GoTechPlace Client & Employer App',
         message:
-          '🏢 Hire skilled engineering students and sponsor verified innovative industry projects on GoTechPlace!\n\nEmployer Portal: https://gotechplace.com/employers',
+          '🏢 Hire skilled engineering students and sponsor verified innovative industry projects on GoTechPlace!\n\nDownload the Client & Employer App on Google Play Store:\nhttps://play.google.com/store/apps/details?id=com.gotechplace.client',
       });
     } catch (err: any) {
       console.log('Client share error:', err);

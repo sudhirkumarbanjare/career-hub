@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import {
   COLORS,
@@ -16,6 +15,7 @@ import {
   Card,
   formatRelativeTime,
   AppNotification,
+  ConfirmationModal,
 } from '@gotechplace/shared';
 import { ClientService } from '../../services/clientService';
 
@@ -32,6 +32,7 @@ export const ClientNotificationsScreen: React.FC<ClientNotificationsScreenProps>
     ClientService.getNotifications()
   );
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [clearConfirmVisible, setClearConfirmVisible] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -54,21 +55,13 @@ export const ClientNotificationsScreen: React.FC<ClientNotificationsScreenProps>
   };
 
   const handleClearAll = () => {
-    Alert.alert(
-      'Clear All Notifications',
-      'Are you sure you want to remove all notifications?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear All',
-          style: 'destructive',
-          onPress: () => {
-            ClientService.clearAllNotifications();
-            setNotifications([]);
-          },
-        },
-      ]
-    );
+    setClearConfirmVisible(true);
+  };
+
+  const confirmClearAll = () => {
+    ClientService.clearAllNotifications();
+    setNotifications([]);
+    setClearConfirmVisible(false);
   };
 
   const displayedNotifications =
@@ -185,6 +178,18 @@ export const ClientNotificationsScreen: React.FC<ClientNotificationsScreenProps>
             </Card>
           </TouchableOpacity>
         )}
+      />
+
+      <ConfirmationModal
+        visible={clearConfirmVisible}
+        title="Clear All Notifications"
+        message="Are you sure you want to remove all notifications? This action cannot be undone."
+        confirmText="Clear All"
+        cancelText="Cancel"
+        isDestructive
+        icon="🗑️"
+        onConfirm={confirmClearAll}
+        onCancel={() => setClearConfirmVisible(false)}
       />
     </View>
   );

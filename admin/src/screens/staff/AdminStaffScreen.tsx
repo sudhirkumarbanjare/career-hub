@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 import {
   COLORS,
@@ -23,6 +22,9 @@ import {
   ALL_PERMISSIONS,
   DEFAULT_ROLE_CONFIGS,
   formatRelativeDate,
+  ConfirmationModal,
+  SuccessModal,
+  ErrorModal,
 } from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
@@ -45,6 +47,11 @@ export const AdminStaffScreen: React.FC<AdminStaffScreenProps> = ({
     DEFAULT_ROLE_CONFIGS.moderator.permissions
   );
   const [saving, setSaving] = useState(false);
+
+  // Modal states
+  const [deleteTargetStaff, setDeleteTargetStaff] = useState<StaffMember | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const loadData = () => {
     setStaff(AdminService.getStaffMembers());
@@ -71,13 +78,15 @@ export const AdminStaffScreen: React.FC<AdminStaffScreenProps> = ({
 
   const handleCreateStaff = () => {
     if (!name.trim() || !phoneNumber.trim()) {
-      Alert.alert('Required Fields', 'Please specify full name and phone number for staff onboarding.');
+      setErrorMsg('Please specify full name and phone number for staff onboarding.');
       return;
     }
 
+    const createdName = name.trim();
+    const createdRole = role;
     setSaving(true);
     AdminService.createStaff(
-      name.trim(),
+      createdName,
       phoneNumber.trim(),
       email.trim(),
       role,
@@ -91,25 +100,20 @@ export const AdminStaffScreen: React.FC<AdminStaffScreenProps> = ({
     setEmail('');
     setRole('moderator');
     setSelectedPermissions(DEFAULT_ROLE_CONFIGS.moderator.permissions);
-    Alert.alert('Staff Created', `${name} has been added with ${role.toUpperCase()} privileges.`);
+    setSuccessMsg(`${createdName} has been added with ${createdRole.toUpperCase()} privileges.`);
   };
 
   const handleDeleteStaff = (member: StaffMember) => {
-    Alert.alert(
-      'Revoke Staff Access',
-      `Are you sure you want to revoke administrative access for ${member.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Revoke Access',
-          style: 'destructive',
-          onPress: () => {
-            AdminService.deleteStaff(member.uid);
-            loadData();
-          },
-        },
-      ]
-    );
+    setDeleteTargetStaff(member);
+  };
+
+  const confirmDeleteStaff = () => {
+    if (!deleteTargetStaff) return;
+    const member = deleteTargetStaff;
+    setDeleteTargetStaff(null);
+    AdminService.deleteStaff(member.uid);
+    loadData();
+    setSuccessMsg(`Administrative access for ${member.name} has been revoked.`);
   };
 
   return (
@@ -269,6 +273,42 @@ export const AdminStaffScreen: React.FC<AdminStaffScreenProps> = ({
           </View>
         </ScrollView>
       </Modal>
+
+      {/* Revoke Staff Confirmation Modal */}
+      {deleteTargetStaff && (
+        <ConfirmationModal
+          visible={!!deleteTargetStaff}
+          title="Revoke Staff Access"
+          message={`Are you sure you want to revoke administrative access for ${deleteTargetStaff.name}?`}
+          confirmText="Revoke Access"
+          cancelText="Cancel"
+          isDestructive
+          icon="🛡️"
+          onConfirm={confirmDeleteStaff}
+          onCancel={() => setDeleteTargetStaff(null)}
+        />
+      )}
+
+      {/* Success Modal */}
+      {successMsg && (
+        <SuccessModal
+          visible={!!successMsg}
+          title="Staff Action Complete"
+          message={successMsg}
+          buttonText="Done"
+          onClose={() => setSuccessMsg(null)}
+        />
+      )}
+
+      {/* Error Modal */}
+      {errorMsg && (
+        <ErrorModal
+          visible={!!errorMsg}
+          title="Required Fields"
+          message={errorMsg}
+          onClose={() => setErrorMsg(null)}
+        />
+      )}
     </View>
   );
 };

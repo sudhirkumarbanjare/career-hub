@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Switch,
-  Alert,
 } from 'react-native';
 import {
   COLORS,
@@ -17,6 +16,8 @@ import {
   Card,
   Badge,
   Button,
+  ErrorModal,
+  SuccessModal,
   AppId,
   AppVersionConfig,
   isValidSemver,
@@ -52,6 +53,16 @@ export const AdminVersionManagementScreen: React.FC<AdminVersionManagementScreen
     currentConfig?.maintenanceMessage || ''
   );
   const [saving, setSaving] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
+  const [successModal, setSuccessModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Sync state whenever selected tab changes
   useEffect(() => {
@@ -71,18 +82,27 @@ export const AdminVersionManagementScreen: React.FC<AdminVersionManagementScreen
   const handleSave = () => {
     // 1. Validation
     if (!isValidSemver(latestVer.trim())) {
-      Alert.alert('Invalid Version', `Latest version "${latestVer}" must follow Semantic Versioning (e.g., 1.2.0).`);
+      setErrorModal({
+        visible: true,
+        title: 'Invalid Version',
+        message: `Latest version "${latestVer}" must follow Semantic Versioning (e.g., 1.2.0).`,
+      });
       return;
     }
     if (!isValidSemver(minVer.trim())) {
-      Alert.alert('Invalid Version', `Minimum required version "${minVer}" must follow Semantic Versioning (e.g., 1.0.0).`);
+      setErrorModal({
+        visible: true,
+        title: 'Invalid Version',
+        message: `Minimum required version "${minVer}" must follow Semantic Versioning (e.g., 1.0.0).`,
+      });
       return;
     }
     if (compareSemver(minVer.trim(), latestVer.trim()) > 0) {
-      Alert.alert(
-        'Version Order Error',
-        `Minimum version (${minVer}) cannot be higher than Latest version (${latestVer}).`
-      );
+      setErrorModal({
+        visible: true,
+        title: 'Version Order Error',
+        message: `Minimum version (${minVer}) cannot be higher than Latest version (${latestVer}).`,
+      });
       return;
     }
 
@@ -100,7 +120,11 @@ export const AdminVersionManagementScreen: React.FC<AdminVersionManagementScreen
 
     setConfigs({ ...configs, [selectedApp]: updated });
     setSaving(false);
-    Alert.alert('Configuration Saved', `Version & release policies updated for ${selectedApp.toUpperCase()} app.`);
+    setSuccessModal({
+      visible: true,
+      title: 'Configuration Saved',
+      message: `Version & release policies updated for ${selectedApp.toUpperCase()} app.`,
+    });
   };
 
   const toggleMaintenanceModeQuick = (val: boolean) => {
@@ -284,6 +308,20 @@ export const AdminVersionManagementScreen: React.FC<AdminVersionManagementScreen
           />
         </Card>
       </ScrollView>
+
+      <ErrorModal
+        visible={errorModal.visible}
+        title={errorModal.title}
+        message={errorModal.message}
+        onDismiss={() => setErrorModal({ visible: false, title: '', message: '' })}
+      />
+
+      <SuccessModal
+        visible={successModal.visible}
+        title={successModal.title}
+        message={successModal.message}
+        onConfirm={() => setSuccessModal({ visible: false, title: '', message: '' })}
+      />
     </View>
   );
 };

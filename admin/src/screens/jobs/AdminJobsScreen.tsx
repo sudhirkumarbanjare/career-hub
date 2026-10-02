@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import {
   COLORS,
@@ -20,6 +19,8 @@ import {
   Job,
   formatCurrency,
   formatRelativeDate,
+  ConfirmationModal,
+  SuccessModal,
 } from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
@@ -35,6 +36,8 @@ export const AdminJobsScreen: React.FC<AdminJobsScreenProps> = ({
   const [jobs, setJobs] = useState<Job[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [deleteTargetJob, setDeleteTargetJob] = useState<Job | null>(null);
+  const [successModalMsg, setSuccessModalMsg] = useState<string | null>(null);
 
   const loadData = () => {
     const all = AdminService.getAllJobs();
@@ -67,21 +70,16 @@ export const AdminJobsScreen: React.FC<AdminJobsScreenProps> = ({
   });
 
   const handleDelete = (job: Job) => {
-    Alert.alert(
-      'Takedown / Delete Job',
-      `Are you sure you want to permanently remove "${job.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            AdminService.deleteJob(job.id);
-            loadData();
-          },
-        },
-      ]
-    );
+    setDeleteTargetJob(job);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTargetJob) return;
+    const job = deleteTargetJob;
+    setDeleteTargetJob(null);
+    AdminService.deleteJob(job.id);
+    loadData();
+    setSuccessModalMsg(`Job "${job.title}" has been removed.`);
   };
 
   return (
@@ -218,6 +216,32 @@ export const AdminJobsScreen: React.FC<AdminJobsScreenProps> = ({
           })
         )}
       </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      {deleteTargetJob && (
+        <ConfirmationModal
+          visible={!!deleteTargetJob}
+          title="Takedown / Delete Job"
+          message={`Are you sure you want to permanently remove "${deleteTargetJob.title}"?`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          isDestructive
+          icon="🗑️"
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTargetJob(null)}
+        />
+      )}
+
+      {/* Success Modal */}
+      {successModalMsg && (
+        <SuccessModal
+          visible={!!successModalMsg}
+          title="Job Deleted"
+          message={successModalMsg}
+          buttonText="Done"
+          onClose={() => setSuccessModalMsg(null)}
+        />
+      )}
     </View>
   );
 };

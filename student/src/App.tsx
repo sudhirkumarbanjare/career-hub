@@ -7,6 +7,8 @@ import {
   Text,
   TouchableOpacity,
   Linking,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import {
   COLORS,
@@ -16,6 +18,8 @@ import {
   StudentProfile,
   VersionCheckService,
   VersionCheckResult,
+  DeviceService,
+  AnalyticsService,
 } from '@gotechplace/shared';
 
 import { StudentService } from './services/studentService';
@@ -50,12 +54,44 @@ export const StudentApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'projects' | 'jobs' | 'courses' | 'profile'>('home');
   const [stackScreen, setStackScreen] = useState<{ name: string; params?: any } | null>(null);
 
-  // Run startup version & maintenance check
+  // Run startup version & maintenance check & device registration
   useEffect(() => {
     const config = VersionCheckService.getDefaultConfig('student');
     const result = VersionCheckService.evaluate('1.0.0', config);
     setVersionStatus(result);
+
+    DeviceService.registerAppLaunch({
+      appId: 'student',
+      appName: 'GoTechPlace Student',
+      appVersion: '1.0.0',
+      uid: user?.uid,
+      role: 'student',
+    });
+
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        DeviceService.recordAppForeground();
+      } else if (nextAppState === 'background' || nextAppState === 'inactive') {
+        DeviceService.recordAppBackground();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
+
+  const handleLogout = () => {
+    if (user) {
+      DeviceService.recordLogout(user.uid);
+    }
+    StudentService.clearSession();
+    setUser(null);
+    setOtpSession(null);
+    setIsRegistered(false);
+    setActiveTab('home');
+    setStackScreen(null);
+  };
 
   // 1. Force Update blocking check
   if (versionStatus?.needsForceUpdate) {
@@ -98,6 +134,7 @@ export const StudentApp: React.FC = () => {
               setUser(verifiedUser);
               const profile = StudentService.initDefaultStudent(verifiedUser);
               setIsRegistered(Boolean(profile.isProfileComplete));
+              DeviceService.recordLogin(verifiedUser.uid, 'student');
             }}
           />
         </SafeAreaView>
@@ -108,6 +145,7 @@ export const StudentApp: React.FC = () => {
       <SafeAreaView style={styles.safeArea}>
         <PhoneLoginScreen
           onOtpRequested={(verificationId, phone) => {
+            AnalyticsService.logAuthEvent('started', 'student');
             setOtpSession({ verificationId, phone });
           }}
         />
@@ -121,6 +159,7 @@ export const StudentApp: React.FC = () => {
       <SafeAreaView style={styles.safeArea}>
         <StudentRegistrationScreen
           onComplete={(profile) => {
+            AnalyticsService.logEvent('profile_completed', { app_role: 'student' });
             setIsRegistered(true);
           }}
         />
@@ -224,14 +263,7 @@ export const StudentApp: React.FC = () => {
         return (
           <StudentProfileScreen
             onNavigateToNotifications={() => setStackScreen({ name: 'notifications' })}
-            onLogout={() => {
-              StudentService.clearSession();
-              setUser(null);
-              setOtpSession(null);
-              setIsRegistered(false);
-              setActiveTab('home');
-              setStackScreen(null);
-            }}
+            onLogout={handleLogout}
           />
         );
     }

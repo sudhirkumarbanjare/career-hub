@@ -3,6 +3,7 @@ import {
   Job,
   JobApplication,
   AppNotification,
+  NotificationService,
   User,
   JobStatus,
   ApprovalStatus,
@@ -218,7 +219,7 @@ class ClientServiceManager {
       (safeUpdates.description || current.description)
     );
 
-    this.currentClient = {
+    const updatedClient: ClientProfile = {
       ...current,
       ...safeUpdates,
       phoneNumber: current.phoneNumber, // STRICT IMMUTABILITY: Retain verified phone number
@@ -229,22 +230,24 @@ class ClientServiceManager {
       updatedAt: new Date().toISOString(),
     };
 
+    this.currentClient = updatedClient;
+
     // Ensure jobs are available for this client
     if (isComplete) {
       this.clientJobs.forEach((j) => {
         if (j.clientId === 'usr_client_demo') {
-          j.clientId = this.currentClient!.uid;
+          j.clientId = updatedClient.uid;
         }
       });
       this.applications.forEach((a) => {
         if (a.clientId === 'usr_client_demo') {
-          a.clientId = this.currentClient!.uid;
+          a.clientId = updatedClient.uid;
         }
       });
     }
 
-    this.clientsByUid.set(this.currentClient.uid, this.currentClient);
-    return this.currentClient;
+    this.clientsByUid.set(updatedClient.uid, updatedClient);
+    return updatedClient;
   }
 
   clearSession(): void {
@@ -279,6 +282,15 @@ class ClientServiceManager {
     };
 
     this.clientJobs.unshift(newJob);
+
+    // Trigger automatic notification to Admin team
+    NotificationService.generateAutomaticNotification('JOB_CREATED', {
+      recipientUid: 'admin_superuser_01',
+      jobId: newJob.id,
+      jobTitle: newJob.title,
+      companyName: client.companyName,
+    });
+
     return newJob;
   }
 
@@ -321,6 +333,15 @@ class ClientServiceManager {
     app.status = status;
     if (feedback) app.feedback = feedback;
     app.updatedAt = new Date().toISOString();
+
+    // Trigger automatic push notification to student regarding status update
+    NotificationService.generateAutomaticNotification('APPLICATION_STATUS_CHANGED', {
+      recipientUid: app.studentId,
+      jobTitle: app.jobTitle,
+      companyName: this.currentClient?.companyName || 'Employer',
+      status: status.toUpperCase(),
+    });
+
     return true;
   }
 

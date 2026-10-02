@@ -1,4 +1,4 @@
-import { User, UserRole, AccountStatus, DeviceToken } from '../types/user';
+import { User, UserRole, AccountStatus } from '../types/user';
 import { validatePhoneNumber, validateOtp } from '../utils/validation';
 import { sendFirebasePhoneOtp, verifyFirebasePhoneOtp } from '../firebase/phoneAuth';
 

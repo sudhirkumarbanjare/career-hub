@@ -12,10 +12,13 @@ import {
   COLORS,
   SPACING,
   TYPOGRAPHY,
+  RADIUS,
   Button,
-  Input,
+  OtpInput,
   AuthService,
   User,
+  maskPhoneNumber,
+  DEFAULT_APP_VERSIONS,
 } from '@gotechplace/shared';
 
 export interface OtpScreenProps {
@@ -36,6 +39,9 @@ export const OtpScreen: React.FC<OtpScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const appVersion = DEFAULT_APP_VERSIONS.student.latestVersion || '1.0.0';
+  const maskedPhone = maskPhoneNumber(phoneNumber);
+
   useEffect(() => {
     let interval: any = null;
     if (timer > 0) {
@@ -47,7 +53,7 @@ export const OtpScreen: React.FC<OtpScreenProps> = ({
   const handleVerify = async () => {
     const cleanOtp = otp.replace(/\D/g, '').slice(0, 6);
     if (cleanOtp.length !== 6) {
-      setError('Please enter a valid 6-digit numeric OTP code');
+      setError('Please enter complete 6-digit verification code');
       return;
     }
     setError('');
@@ -57,10 +63,10 @@ export const OtpScreen: React.FC<OtpScreenProps> = ({
       if (res.success && res.user) {
         onOtpVerified(res.user);
       } else {
-        setError(res.error || 'Invalid OTP code. Please try again.');
+        setError(res.error || 'Invalid OTP code. Please check and try again.');
       }
     } catch (e: any) {
-      setError(e.message || 'Verification failed');
+      setError(e.message || 'Verification failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -75,7 +81,7 @@ export const OtpScreen: React.FC<OtpScreenProps> = ({
       if (res.success) {
         setTimer(30);
       } else {
-        setError(res.error || 'Could not resend OTP');
+        setError(res.error || 'Could not resend OTP code');
       }
     } catch (e: any) {
       setError(e.message || 'Resend failed');
@@ -89,49 +95,68 @@ export const OtpScreen: React.FC<OtpScreenProps> = ({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
+          {/* Security Shield Icon */}
+          <View style={styles.iconCircle}>
+            <Text style={styles.iconText}>🔐</Text>
+          </View>
+
           <Text style={styles.cardTitle}>Verify Mobile OTP</Text>
           <Text style={styles.cardSubtitle}>
-            Enter the 6-digit verification code sent to{' '}
-            <Text style={styles.highlightPhone}>{phoneNumber}</Text>
+            We have sent a 6-digit authentication code to your registered mobile number.
           </Text>
 
-          <Input
-            label="6-Digit Verification Code"
-            placeholder="Enter 6-digit OTP"
+          {/* Number Pill with Quick Edit */}
+          <View style={styles.phonePillRow}>
+            <View style={styles.phonePill}>
+              <Text style={styles.flagText}>🇮🇳</Text>
+              <Text style={styles.phoneText}>{maskedPhone}</Text>
+            </View>
+            <TouchableOpacity onPress={onChangePhone} activeOpacity={0.7} style={styles.editPhoneBtn}>
+              <Text style={styles.editPhoneText}>Change ✏️</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Segmented OTP Input */}
+          <OtpInput
             value={otp}
             onChangeText={(text) => {
-              const digits = text.replace(/\D/g, '').slice(0, 6);
-              setOtp(digits);
+              setOtp(text);
               if (error) setError('');
             }}
-            keyboardType="number-pad"
-            maxLength={6}
             error={error}
-            inputStyle={styles.otpInput}
+            accentColor={COLORS.brand[600]}
           />
 
           <Button
-            title="VERIFY & CONTINUE"
+            title={loading ? 'VERIFYING CODE...' : 'VERIFY & CONTINUE ➔'}
             onPress={handleVerify}
             loading={loading}
             size="lg"
             style={styles.verifyBtn}
           />
 
+          {/* Resend & Timer */}
           <View style={styles.resendContainer}>
             {timer > 0 ? (
-              <Text style={styles.timerText}>Resend OTP in {timer}s</Text>
+              <View style={styles.timerBadge}>
+                <Text style={styles.timerText}>
+                  Resend code in <Text style={styles.timerCount}>00:{timer < 10 ? `0${timer}` : timer}</Text>
+                </Text>
+              </View>
             ) : (
-              <TouchableOpacity onPress={handleResend} activeOpacity={0.7}>
-                <Text style={styles.resendLink}>Resend OTP Code</Text>
+              <TouchableOpacity onPress={handleResend} activeOpacity={0.7} style={styles.resendActiveBtn}>
+                <Text style={styles.resendLink}>🔄 Resend OTP Code</Text>
               </TouchableOpacity>
             )}
+          </View>
 
-            <TouchableOpacity onPress={onChangePhone} activeOpacity={0.7} style={styles.changePhoneBtn}>
-              <Text style={styles.changePhoneText}>Change Mobile Number</Text>
-            </TouchableOpacity>
+          {/* Security Guarantee */}
+          <View style={styles.footerNotice}>
+            <Text style={styles.footerText}>
+              🔒 Secure Firebase authentication • Instant verification
+            </Text>
           </View>
         </View>
       </ScrollView>
@@ -147,59 +172,129 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: SPACING.xl,
+    padding: SPACING.lg,
   },
   card: {
     backgroundColor: COLORS.surface,
-    borderRadius: 20,
+    borderRadius: RADIUS['2xl'] || 24,
     padding: SPACING.xl,
     borderWidth: 1,
     borderColor: COLORS.gray[200],
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: COLORS.brand[50] || '#eff6ff',
+    borderWidth: 2,
+    borderColor: COLORS.brand[200] || '#bfdbfe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
+  iconText: {
+    fontSize: 28,
   },
   cardTitle: {
-    fontSize: TYPOGRAPHY.sizes.xl,
-    fontWeight: TYPOGRAPHY.weights.bold,
+    fontSize: TYPOGRAPHY.sizes['2xl'],
+    fontWeight: TYPOGRAPHY.weights.extrabold,
     color: COLORS.gray[900],
-    marginBottom: 4,
+    textAlign: 'center',
+    marginBottom: 6,
   },
   cardSubtitle: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.gray[500],
-    lineHeight: 20,
-    marginBottom: SPACING.xl,
-  },
-  highlightPhone: {
-    color: COLORS.brand[700],
-    fontWeight: TYPOGRAPHY.weights.bold,
-  },
-  otpInput: {
-    letterSpacing: 6,
-    fontSize: TYPOGRAPHY.sizes.xl,
-    fontWeight: TYPOGRAPHY.weights.bold,
     textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.xs,
+  },
+  phonePillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray[50],
+    paddingVertical: 6,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
+    marginBottom: SPACING.md,
+    gap: 8,
+  },
+  phonePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  flagText: {
+    fontSize: 14,
+  },
+  phoneText: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.gray[900],
+    letterSpacing: 0.5,
+  },
+  editPhoneBtn: {
+    paddingLeft: 6,
+    borderLeftWidth: 1,
+    borderLeftColor: COLORS.gray[300],
+  },
+  editPhoneText: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    color: COLORS.brand[600],
+    fontWeight: TYPOGRAPHY.weights.bold,
   },
   verifyBtn: {
-    marginTop: SPACING.sm,
+    width: '100%',
+    marginTop: SPACING.md,
   },
   resendContainer: {
+    marginTop: SPACING.lg,
     alignItems: 'center',
-    marginTop: SPACING.xl,
+  },
+  timerBadge: {
+    paddingVertical: 6,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.gray[100],
+    borderRadius: RADIUS.full,
   },
   timerText: {
     fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.gray[400],
+    color: COLORS.gray[500],
+    fontWeight: TYPOGRAPHY.weights.medium,
+  },
+  timerCount: {
+    color: COLORS.brand[700],
+    fontWeight: TYPOGRAPHY.weights.bold,
+  },
+  resendActiveBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: SPACING.md,
   },
   resendLink: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.brand[600],
-    fontWeight: TYPOGRAPHY.weights.semibold,
+    fontWeight: TYPOGRAPHY.weights.bold,
   },
-  changePhoneBtn: {
-    marginTop: SPACING.md,
+  footerNotice: {
+    marginTop: SPACING.xl,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gray[100],
+    width: '100%',
+    alignItems: 'center',
   },
-  changePhoneText: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.gray[500],
-    textDecorationLine: 'underline',
+  footerText: {
+    fontSize: 11,
+    color: COLORS.gray[400],
+    fontWeight: TYPOGRAPHY.weights.medium,
   },
 });

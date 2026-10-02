@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   TextInput,
 } from 'react-native';
 import {
@@ -21,6 +20,9 @@ import {
   Modal,
   ClientProfile,
   formatRelativeDate,
+  ConfirmationModal,
+  SuccessModal,
+  ErrorModal,
 } from '@gotechplace/shared';
 import { AdminService } from '../../services/adminService';
 
@@ -39,6 +41,11 @@ export const ClientApprovalsScreen: React.FC<ClientApprovalsScreenProps> = ({
   const [rejectTargetId, setRejectTargetId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Modal feedback states
+  const [approveTargetClient, setApproveTargetClient] = useState<ClientProfile | null>(null);
+  const [successModalConfig, setSuccessModalConfig] = useState<{ title: string; message: string } | null>(null);
+  const [errorModalMsg, setErrorModalMsg] = useState<string | null>(null);
 
   const loadData = () => {
     const all = AdminService.getAllClients();
@@ -62,26 +69,24 @@ export const ClientApprovalsScreen: React.FC<ClientApprovalsScreenProps> = ({
   });
 
   const handleApprove = (client: ClientProfile) => {
-    Alert.alert(
-      'Approve Client',
-      `Are you sure you want to verify and approve "${client.companyName}"? They will be permitted to post jobs immediately.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Approve',
-          onPress: () => {
-            setActionLoading(true);
-            AdminService.approveClient(client.uid);
-            loadData();
-            setActionLoading(false);
-            if (selectedClient?.uid === client.uid) {
-              setSelectedClient(null);
-            }
-            Alert.alert('Success', `Client "${client.companyName}" has been approved.`);
-          },
-        },
-      ]
-    );
+    setApproveTargetClient(client);
+  };
+
+  const confirmApproveClient = () => {
+    if (!approveTargetClient) return;
+    const client = approveTargetClient;
+    setApproveTargetClient(null);
+    setActionLoading(true);
+    AdminService.approveClient(client.uid);
+    loadData();
+    setActionLoading(false);
+    if (selectedClient?.uid === client.uid) {
+      setSelectedClient(null);
+    }
+    setSuccessModalConfig({
+      title: 'Client Approved',
+      message: `Client "${client.companyName}" has been approved and can now post jobs.`,
+    });
   };
 
   const openRejectDialog = (clientId: string) => {
@@ -93,7 +98,7 @@ export const ClientApprovalsScreen: React.FC<ClientApprovalsScreenProps> = ({
   const handleConfirmReject = () => {
     if (!rejectTargetId) return;
     if (!rejectReason.trim()) {
-      Alert.alert('Reason Required', 'Please provide a clear reason for rejecting this client registration.');
+      setErrorModalMsg('Please provide a clear reason for rejecting this client registration.');
       return;
     }
 
@@ -107,7 +112,10 @@ export const ClientApprovalsScreen: React.FC<ClientApprovalsScreenProps> = ({
     if (selectedClient?.uid === rejectTargetId) {
       setSelectedClient(null);
     }
-    Alert.alert('Rejected', 'Client application has been rejected with feedback.');
+    setSuccessModalConfig({
+      title: 'Client Rejected',
+      message: 'Client application has been rejected with constructive feedback.',
+    });
   };
 
   return (
@@ -315,6 +323,41 @@ export const ClientApprovalsScreen: React.FC<ClientApprovalsScreenProps> = ({
           </View>
         </View>
       </Modal>
+
+      {/* Approve Confirmation Modal */}
+      {approveTargetClient && (
+        <ConfirmationModal
+          visible={!!approveTargetClient}
+          title="Approve Client"
+          message={`Are you sure you want to verify and approve "${approveTargetClient.companyName}"? They will be permitted to post jobs immediately.`}
+          confirmText="Approve"
+          cancelText="Cancel"
+          icon="🏢"
+          onConfirm={confirmApproveClient}
+          onCancel={() => setApproveTargetClient(null)}
+        />
+      )}
+
+      {/* Success Feedback Modal */}
+      {successModalConfig && (
+        <SuccessModal
+          visible={!!successModalConfig}
+          title={successModalConfig.title}
+          message={successModalConfig.message}
+          buttonText="Done"
+          onClose={() => setSuccessModalConfig(null)}
+        />
+      )}
+
+      {/* Error Modal */}
+      {errorModalMsg && (
+        <ErrorModal
+          visible={!!errorModalMsg}
+          title="Reason Required"
+          message={errorModalMsg}
+          onClose={() => setErrorModalMsg(null)}
+        />
+      )}
     </View>
   );
 };

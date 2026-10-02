@@ -9,7 +9,7 @@ export type UserRole =
 
 export type AccountStatus = 'active' | 'suspended' | 'pending' | 'rejected';
 
-export interface DeviceToken {
+export interface UserDeviceToken {
   token: string;
   platform: 'android' | 'ios';
   app: 'student' | 'client' | 'admin';
@@ -32,7 +32,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   lastLoginAt?: string;
-  devices?: Record<string, DeviceToken>;
+  devices?: Record<string, UserDeviceToken>;
 }
 
 export interface StudentProfile {

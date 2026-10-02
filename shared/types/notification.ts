@@ -9,13 +9,52 @@ export type NotificationTarget =
   | 'admin_app' 
   | 'all_apps'
   | 'individual' 
+  | 'multiple_users'
   | 'custom';
+
+export type NotificationCategory =
+  | 'general'
+  | 'jobs'
+  | 'applications'
+  | 'account'
+  | 'admin'
+  | 'courses'
+  | 'projects'
+  | 'system';
+
+export type SystemNotificationEvent =
+  | 'NEW_STUDENT_REGISTERED'
+  | 'NEW_CLIENT_REGISTERED'
+  | 'CLIENT_KYC_SUBMITTED'
+  | 'CLIENT_APPROVED'
+  | 'CLIENT_REJECTED'
+  | 'JOB_CREATED'
+  | 'JOB_APPROVED'
+  | 'JOB_REJECTED'
+  | 'JOB_CLOSED'
+  | 'APPLICATION_SUBMITTED'
+  | 'APPLICATION_STATUS_CHANGED'
+  | 'COURSE_ENROLLED'
+  | 'PROJECT_BOOKED'
+  | 'SYSTEM_ALERT';
+
+export interface DeviceToken {
+  id: string;
+  userId: string;
+  token: string;
+  platform: 'android' | 'ios' | 'web';
+  appId: 'student' | 'client' | 'admin';
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface AppNotification {
   id: string;
   userId: string;
   title: string;
   body: string;
+  category?: NotificationCategory;
   imageUrl?: string;
   deepLink?: string;
   read: boolean;
@@ -27,6 +66,7 @@ export interface NotificationCampaign {
   id: string;
   title: string;
   message: string;
+  category?: NotificationCategory;
   imageUrl?: string;
   deepLink?: string;
   target: NotificationTarget;
@@ -41,3 +81,4 @@ export interface NotificationCampaign {
   failureCount?: number;
   createdAt: string;
 }
+

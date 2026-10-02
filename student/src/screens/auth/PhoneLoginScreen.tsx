@@ -6,17 +6,19 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Linking,
+  TouchableOpacity,
 } from 'react-native';
 import {
   COLORS,
   SPACING,
   TYPOGRAPHY,
+  RADIUS,
   Button,
   Input,
   AuthService,
   AppLogo,
-  APP_NAME,
-  APP_TAGLINE,
+  DEFAULT_APP_VERSIONS,
 } from '@gotechplace/shared';
 
 export interface PhoneLoginScreenProps {
@@ -28,10 +30,12 @@ export const PhoneLoginScreen: React.FC<PhoneLoginScreenProps> = ({ onOtpRequest
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const appVersion = DEFAULT_APP_VERSIONS.student.latestVersion || '1.0.0';
+
   const handleSendOtp = async () => {
     const cleanDigits = phone.replace(/\D/g, '');
     if (cleanDigits.length !== 10) {
-      setError('Please enter exactly 10-digit mobile number');
+      setError('Please enter a valid 10-digit mobile number');
       return;
     }
     setError('');
@@ -41,7 +45,7 @@ export const PhoneLoginScreen: React.FC<PhoneLoginScreenProps> = ({ onOtpRequest
       if (res.success && res.verificationId) {
         onOtpRequested(res.verificationId, res.formattedPhone);
       } else {
-        setError(res.error || 'Failed to send OTP code.');
+        setError(res.error || 'Failed to send OTP code. Please try again.');
       }
     } catch (e: any) {
       setError(e.message || 'An unexpected error occurred. Please try again.');
@@ -50,28 +54,39 @@ export const PhoneLoginScreen: React.FC<PhoneLoginScreenProps> = ({ onOtpRequest
     }
   };
 
+  const openLegal = (url: string) => {
+    Linking.openURL(url).catch(() => {});
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <AppLogo
-            portalLabel="Student Portal"
+            portalLabel="STUDENT PORTAL"
             size="md"
             subtitle="Empowering student projects, practical skills, and client career opportunities."
           />
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Student Phone Sign In</Text>
+          <View style={styles.badgeRow}>
+            <View style={styles.roleBadge}>
+              <Text style={styles.roleBadgeText}>🎓 Student Login</Text>
+            </View>
+            <Text style={styles.versionBadge}>v{appVersion}</Text>
+          </View>
+
+          <Text style={styles.cardTitle}>Welcome to GoTechPlace</Text>
           <Text style={styles.cardSubtitle}>
-            Enter your 10-digit mobile number to receive a secure 6-digit verification code.
+            Login to discover verified jobs, book engineering projects, and manage your opportunities.
           </Text>
 
           <Input
-            label="Mobile Number (10 Digits)"
+            label="Mobile Number"
             placeholder="Enter 10-digit mobile number"
             value={phone}
             onChangeText={(text) => {
@@ -86,7 +101,7 @@ export const PhoneLoginScreen: React.FC<PhoneLoginScreenProps> = ({ onOtpRequest
           />
 
           <Button
-            title="SEND VERIFICATION OTP"
+            title={loading ? 'SENDING OTP...' : 'SEND VERIFICATION OTP ➔'}
             onPress={handleSendOtp}
             loading={loading}
             size="lg"
@@ -97,6 +112,17 @@ export const PhoneLoginScreen: React.FC<PhoneLoginScreenProps> = ({ onOtpRequest
             <Text style={styles.secureText}>
               🔒 Secure phone-only authentication powered by Firebase Auth.
             </Text>
+          </View>
+
+          {/* Legal / Policy links */}
+          <View style={styles.legalRow}>
+            <TouchableOpacity onPress={() => openLegal('https://gotechplace.com/privacy')} activeOpacity={0.7}>
+              <Text style={styles.legalLink}>Privacy Policy</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalDot}>•</Text>
+            <TouchableOpacity onPress={() => openLegal('https://gotechplace.com/terms')} activeOpacity={0.7}>
+              <Text style={styles.legalLink}>Terms of Service</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -112,54 +138,51 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: SPACING.xl,
+    padding: SPACING.lg,
   },
   header: {
     alignItems: 'center',
-    marginBottom: SPACING['2xl'],
-  },
-  logoBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: COLORS.brand[600],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.md,
-  },
-  logoText: {
-    fontSize: 32,
-  },
-  appName: {
-    fontSize: TYPOGRAPHY.sizes['3xl'],
-    fontWeight: TYPOGRAPHY.weights.extrabold,
-    color: COLORS.brand[900],
-    letterSpacing: -0.5,
-  },
-  portalTag: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    fontWeight: TYPOGRAPHY.weights.bold,
-    color: COLORS.brand[600],
-    letterSpacing: 1.5,
-    marginTop: 2,
-    marginBottom: 4,
-  },
-  tagline: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.gray[500],
-    textAlign: 'center',
-    maxWidth: 280,
+    marginBottom: SPACING.xl,
   },
   card: {
     backgroundColor: COLORS.surface,
-    borderRadius: 20,
+    borderRadius: RADIUS['2xl'] || 24,
     padding: SPACING.xl,
     borderWidth: 1,
     borderColor: COLORS.gray[200],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  roleBadge: {
+    backgroundColor: COLORS.brand[50] || '#eff6ff',
+    paddingVertical: 4,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.brand[200] || '#bfdbfe',
+  },
+  roleBadgeText: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.brand[700],
+  },
+  versionBadge: {
+    fontSize: 11,
+    fontWeight: TYPOGRAPHY.weights.semibold,
+    color: COLORS.gray[400],
   },
   cardTitle: {
-    fontSize: TYPOGRAPHY.sizes.xl,
-    fontWeight: TYPOGRAPHY.weights.bold,
+    fontSize: TYPOGRAPHY.sizes['2xl'],
+    fontWeight: TYPOGRAPHY.weights.extrabold,
     color: COLORS.gray[900],
     marginBottom: 4,
   },
@@ -167,26 +190,43 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.gray[500],
     lineHeight: 20,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
   countryCode: {
     fontSize: TYPOGRAPHY.sizes.sm,
-    fontWeight: TYPOGRAPHY.weights.semibold,
+    fontWeight: TYPOGRAPHY.weights.bold,
     color: COLORS.gray[700],
   },
   actionBtn: {
     marginTop: SPACING.sm,
+    width: '100%',
   },
   secureNotice: {
-    marginTop: SPACING.lg,
+    marginTop: SPACING.md,
     padding: SPACING.sm,
     backgroundColor: COLORS.gray[50],
-    borderRadius: 8,
+    borderRadius: RADIUS.md,
     alignItems: 'center',
   },
   secureText: {
     fontSize: TYPOGRAPHY.sizes.xs,
     color: COLORS.gray[500],
     textAlign: 'center',
+  },
+  legalRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: SPACING.lg,
+    gap: 8,
+  },
+  legalLink: {
+    fontSize: 11,
+    color: COLORS.gray[400],
+    textDecorationLine: 'underline',
+  },
+  legalDot: {
+    fontSize: 11,
+    color: COLORS.gray[300],
   },
 });
