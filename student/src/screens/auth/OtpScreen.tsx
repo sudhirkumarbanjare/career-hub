@@ -31,7 +31,7 @@ export const OtpScreen: React.FC<OtpScreenProps> = ({
   onOtpVerified,
   onChangePhone,
 }) => {
-  const [otp, setOtp] = useState('123456'); // Pre-fill mock test OTP
+  const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(30);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -45,10 +45,15 @@ export const OtpScreen: React.FC<OtpScreenProps> = ({
   }, [timer]);
 
   const handleVerify = async () => {
+    const cleanOtp = otp.replace(/\D/g, '').slice(0, 6);
+    if (cleanOtp.length !== 6) {
+      setError('Please enter a valid 6-digit numeric OTP code');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      const res = await AuthService.verifyOtp(verificationId, otp, phoneNumber, 'student');
+      const res = await AuthService.verifyOtp(verificationId, cleanOtp, phoneNumber, 'student');
       if (res.success && res.user) {
         onOtpVerified(res.user);
       } else {
@@ -94,10 +99,11 @@ export const OtpScreen: React.FC<OtpScreenProps> = ({
 
           <Input
             label="6-Digit Verification Code"
-            placeholder="123456"
+            placeholder="Enter 6-digit OTP"
             value={otp}
             onChangeText={(text) => {
-              setOtp(text);
+              const digits = text.replace(/\D/g, '').slice(0, 6);
+              setOtp(digits);
               if (error) setError('');
             }}
             keyboardType="number-pad"

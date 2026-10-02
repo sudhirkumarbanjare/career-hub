@@ -31,10 +31,12 @@ import { AdminAuditLogsScreen } from './screens/audit/AdminAuditLogsScreen';
 import { AdminCategoriesScreen } from './screens/categories/AdminCategoriesScreen';
 import { AdminSettingsScreen } from './screens/settings/AdminSettingsScreen';
 import { AdminNotificationsScreen } from './screens/notifications/AdminNotificationsScreen';
+import { AdminProjectsScreen } from './screens/projects/AdminProjectsScreen';
 
 type AuthStage = 'login' | 'otp' | 'authenticated';
 type AdminTab =
   | 'dashboard'
+  | 'projects'
   | 'users'
   | 'clientApprovals'
   | 'jobApprovals'
@@ -46,6 +48,7 @@ type AdminTab =
   | 'categories'
   | 'audit'
   | 'settings';
+
 
 export const App: React.FC = () => {
   const [authStage, setAuthStage] = useState<AuthStage>('authenticated');
@@ -136,6 +139,12 @@ export const App: React.FC = () => {
             onNavigateCategories={() => setActiveTab('categories')}
             onNavigateAudit={() => setActiveTab('audit')}
             onNavigateSettings={() => setActiveTab('settings')}
+          />
+        )}
+
+        {activeTab === 'projects' && (
+          <AdminProjectsScreen
+            onBack={() => setActiveTab('dashboard')}
           />
         )}
 
@@ -338,6 +347,17 @@ export const App: React.FC = () => {
                 )}
               </View>
               <Text style={styles.menuSub}>Platform activity, verification requests & alerts</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.menuItem, { backgroundColor: '#F0F7FF', borderRadius: 8, paddingHorizontal: SPACING.sm, marginBottom: 4 }]}
+            onPress={() => navigateTo('projects')}
+          >
+            <Text style={styles.menuIcon}>📚</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.menuTitle, { color: COLORS.brand[700] }]}>Projects Control & Pricing</Text>
+              <Text style={styles.menuSub}>Manage all 12 project fields, costs, branches & status</Text>
             </View>
           </TouchableOpacity>
 

@@ -20,21 +20,29 @@ export interface JobAttachment {
 
 export interface Job {
   id: string;
-  clientId: string;
+  job_id?: string;
+  clientId?: string;
+  company?: string;
   clientName?: string;
   clientLogo?: string;
+  company_logo?: string;
   title: string;
+  role?: string;
   description: string;
-  category: string;
+  category?: string;
+  eligibility?: string;
+  experience?: string;
+  apply_url?: string;
   skills: string[];
   budget: number;
   deadline: string;
   location: string;
-  isRemote: boolean;
-  jobType: JobType;
-  attachments: JobAttachment[];
-  status: JobStatus;
-  approvalStatus: ApprovalStatus;
+  isRemote?: boolean;
+  jobType?: JobType;
+  job_type?: JobType;
+  attachments?: JobAttachment[];
+  status?: JobStatus;
+  approvalStatus?: ApprovalStatus;
   approvedBy?: string;
   approvedAt?: string;
   rejectedBy?: string;
@@ -42,7 +50,9 @@ export interface Job {
   rejectionReason?: string;
   applicationsCount?: number;
   createdAt: string;
+  created_at?: string;
   updatedAt: string;
+  updated_at?: string;
 }
 
 export interface Category {

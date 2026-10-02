@@ -127,42 +127,88 @@ export const JobApplicationsScreen: React.FC<JobApplicationsScreenProps> = ({
                 ))}
               </View>
 
-              {/* Resume link & Contact */}
+              {/* Resume link & Contact Actions */}
               <View style={styles.contactRow}>
-                <Text style={styles.contactPhone}>📱 {item.studentPhone}</Text>
+                <TouchableOpacity
+                  style={styles.callBtn}
+                  onPress={() => Linking.openURL(`tel:${item.studentPhone}`)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.callBtnText}>📞 {item.studentPhone}</Text>
+                </TouchableOpacity>
+
                 {item.resumeUrl ? (
                   <TouchableOpacity
                     onPress={() => Linking.openURL(item.resumeUrl!)}
                     style={styles.resumeBtn}
+                    activeOpacity={0.8}
                   >
-                    <Text style={styles.resumeText}>View Resume ↗</Text>
+                    <Text style={styles.resumeText}>📄 View Resume ↗</Text>
                   </TouchableOpacity>
                 ) : null}
               </View>
 
-              {/* Action Buttons */}
+              {/* Status Action CTAs */}
               <View style={styles.actionsRow}>
-                <Button
-                  title="Shortlist"
+                <TouchableOpacity
+                  style={[
+                    styles.actionBtn,
+                    styles.shortlistBtn,
+                    item.status === 'shortlisted' && styles.shortlistBtnActive,
+                  ]}
                   onPress={() => handleUpdateStatus(item.id, 'shortlisted')}
-                  variant={item.status === 'shortlisted' ? 'primary' : 'outline'}
-                  size="sm"
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  title="Accept ✓"
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.actionBtnText,
+                      styles.shortlistText,
+                      item.status === 'shortlisted' && styles.activeBtnText,
+                    ]}
+                  >
+                    ⭐ Shortlist
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.actionBtn,
+                    styles.acceptBtn,
+                    item.status === 'accepted' && styles.acceptBtnActive,
+                  ]}
                   onPress={() => handleUpdateStatus(item.id, 'accepted')}
-                  variant={item.status === 'accepted' ? 'primary' : 'secondary'}
-                  size="sm"
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  title="Reject ✕"
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.actionBtnText,
+                      styles.acceptText,
+                      item.status === 'accepted' && styles.activeBtnText,
+                    ]}
+                  >
+                    ✓ Accept & Hire
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.actionBtn,
+                    styles.rejectBtn,
+                    item.status === 'rejected' && styles.rejectBtnActive,
+                  ]}
                   onPress={() => handleUpdateStatus(item.id, 'rejected')}
-                  variant={item.status === 'rejected' ? 'danger' : 'ghost'}
-                  size="sm"
-                  style={{ flex: 1 }}
-                />
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.actionBtnText,
+                      styles.rejectText,
+                      item.status === 'rejected' && styles.activeBtnText,
+                    ]}
+                  >
+                    ✕ Decline
+                  </Text>
+                </TouchableOpacity>
               </View>
             </Card>
           );
@@ -189,6 +235,8 @@ const styles = StyleSheet.create({
   },
   appCard: {
     marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
   },
   cardHeader: {
     flexDirection: 'row',
@@ -227,6 +275,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     padding: SPACING.sm,
     marginVertical: SPACING.xs,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.brand[500],
   },
   coverNoteText: {
     fontSize: TYPOGRAPHY.sizes.xs,
@@ -242,8 +292,10 @@ const styles = StyleSheet.create({
   skillPill: {
     backgroundColor: COLORS.brand[50],
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: 4,
+    borderWidth: 1,
+    borderColor: COLORS.brand[200],
   },
   skillText: {
     fontSize: 10,
@@ -256,25 +308,84 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: COLORS.gray[100],
-    paddingVertical: SPACING.xs,
+    paddingVertical: SPACING.sm,
     marginBottom: SPACING.sm,
   },
-  contactPhone: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.gray[600],
+  callBtn: {
+    backgroundColor: COLORS.gray[100],
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: RADIUS.md,
+  },
+  callBtnText: {
+    fontSize: 11,
+    color: COLORS.gray[800],
+    fontWeight: '600',
   },
   resumeBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
   },
   resumeText: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.brand[600],
-    fontWeight: 'bold',
+    fontSize: 11,
+    color: '#1d4ed8',
+    fontWeight: '700',
   },
   actionsRow: {
     flexDirection: 'row',
     gap: SPACING.xs,
+  },
+  actionBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  actionBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  shortlistBtn: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+  },
+  shortlistText: {
+    color: '#b45309',
+  },
+  shortlistBtnActive: {
+    backgroundColor: '#f59e0b',
+    borderColor: '#d97706',
+  },
+  acceptBtn: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
+  },
+  acceptText: {
+    color: '#15803d',
+  },
+  acceptBtnActive: {
+    backgroundColor: '#16a34a',
+    borderColor: '#15803d',
+  },
+  rejectBtn: {
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
+  },
+  rejectText: {
+    color: '#be123c',
+  },
+  rejectBtnActive: {
+    backgroundColor: '#e11d48',
+    borderColor: '#be123c',
+  },
+  activeBtnText: {
+    color: '#ffffff',
   },
   emptyContainer: {
     padding: SPACING['3xl'],

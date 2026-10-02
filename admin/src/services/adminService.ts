@@ -17,12 +17,17 @@ import {
   SystemSettings,
   Permission,
   UserRole,
+  Project,
+  INITIAL_PROJECTS,
   DEFAULT_ROLE_CONFIGS,
   DEFAULT_APP_VERSIONS,
   DEFAULT_CATEGORIES,
 } from '@gotechplace/shared';
 
 class AdminServiceManager {
+  // 0. Projects Dataset
+  private projects: Project[] = [...INITIAL_PROJECTS];
+
   // 1. Current logged-in admin user
   private currentAdmin: User = {
     uid: 'admin_superuser_01',
@@ -789,9 +794,71 @@ class AdminServiceManager {
     this.adminNotifications = this.adminNotifications.filter((n) => n.id !== id);
   }
 
-  clearAllAdminNotifications() {
-    this.adminNotifications = [];
+  // --- Projects Management (Full Control) ---
+  getAllProjects(): Project[] {
+    return [...this.projects];
+  }
+
+  getProjectById(projectId: string): Project | undefined {
+    return this.projects.find((p) => p.project_id === projectId);
+  }
+
+  createProject(data: Partial<Project>): Project {
+    const newProject: Project = {
+      project_id: data.project_id || `proj_${Date.now()}`,
+      title: data.title || 'Untitled Project',
+      description: data.description || '',
+      branch: data.branch || 'CSE / IT',
+      project_type: data.project_type || 'Minor',
+      technologies: data.technologies || ['React Native', 'Node.js'],
+      difficulty: data.difficulty || 'Intermediate',
+      duration: data.duration || '4–6 weeks',
+      cost: data.discounted_cost || data.cost || 6000,
+      original_cost: data.original_cost || 8000,
+      discounted_cost: data.discounted_cost || 6000,
+      availability: data.availability || 'Available',
+      capacity: data.capacity || 25,
+      image: data.image || '/images/projects/1.webp',
+      components: data.components || [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    this.projects.unshift(newProject);
+    this.logAction('CREATE_PROJECT', 'project', newProject.project_id, { title: newProject.title });
+    return newProject;
+  }
+
+  updateProject(projectId: string, updates: Partial<Project>): Project | null {
+    const idx = this.projects.findIndex((p) => p.project_id === projectId);
+    if (idx === -1) return null;
+    this.projects[idx] = {
+      ...this.projects[idx],
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+    this.logAction('UPDATE_PROJECT', 'project', projectId, updates);
+    return this.projects[idx];
+  }
+
+  deleteProject(projectId: string): boolean {
+    const prevLen = this.projects.length;
+    this.projects = this.projects.filter((p) => p.project_id !== projectId);
+    if (this.projects.length < prevLen) {
+      this.logAction('DELETE_PROJECT', 'project', projectId, {});
+      return true;
+    }
+    return false;
+  }
+
+  toggleProjectAvailability(projectId: string): Project | null {
+    const p = this.projects.find((item) => item.project_id === projectId);
+    if (!p) return null;
+    p.availability = p.availability === 'Available' ? 'Booked' : 'Available';
+    p.updated_at = new Date().toISOString();
+    this.logAction('UPDATE_PROJECT', 'project', projectId, { availability: p.availability });
+    return p;
   }
 }
 
 export const AdminService = new AdminServiceManager();
+

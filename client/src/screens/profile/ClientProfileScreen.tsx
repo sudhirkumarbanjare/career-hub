@@ -6,6 +6,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Share,
 } from 'react-native';
 import {
   COLORS,
@@ -67,6 +68,18 @@ export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({
   };
 
   const badge = getApprovalBadge();
+
+  const handleShareApp = async () => {
+    try {
+      await Share.share({
+        title: 'GoTechPlace Client & Employer Portal',
+        message:
+          '🏢 Hire skilled engineering students and sponsor verified innovative industry projects on GoTechPlace!\n\nEmployer Portal: https://gotechplace.com/employers',
+      });
+    } catch (err: any) {
+      console.log('Client share error:', err);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -144,6 +157,31 @@ export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({
           </TouchableOpacity>
         ) : null}
 
+        {/* Share Employer Portal Card */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleShareApp}
+          style={styles.notifCardTouch}
+        >
+          <Card style={styles.shareMenuCard}>
+            <View style={styles.notifCardLeft}>
+              <View style={styles.shareIconCircle}>
+                <Text style={{ fontSize: 18 }}>📤</Text>
+              </View>
+              <View style={{ marginLeft: SPACING.sm, flex: 1 }}>
+                <Text style={styles.notifCardTitle}>Share Employer Portal</Text>
+                <Text style={styles.notifCardSub}>
+                  Invite hiring managers to recruit top engineering talent
+                </Text>
+              </View>
+            </View>
+            <View style={styles.notifCardRight}>
+              <Badge label="Share 🔗" variant="success" size="sm" />
+              <Text style={styles.chevron}>→</Text>
+            </View>
+          </Card>
+        </TouchableOpacity>
+
         <Card style={styles.infoCard}>
           <Text style={styles.cardHeading}>Account & Organization Info</Text>
           <View style={styles.infoRow}>
@@ -185,6 +223,11 @@ export const ClientProfileScreen: React.FC<ClientProfileScreenProps> = ({
         onClose={() => setIsEditOpen(false)}
         title="Edit Organization Profile"
       >
+        <Text style={styles.inputLabel}>Registered Mobile (Immutable)</Text>
+        <View style={styles.lockedInput}>
+          <Text style={styles.lockedInputText}>🔒 {client.phoneNumber} (Verified)</Text>
+        </View>
+
         <Text style={styles.inputLabel}>Company Name</Text>
         <TextInput
           value={editCompany}
@@ -369,6 +412,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#99f6e4',
   },
+  shareMenuCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+  },
+  shareIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   notifCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -401,5 +463,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: COLORS.gray[400],
     marginLeft: 4,
+  },
+  lockedInput: {
+    backgroundColor: COLORS.gray[100],
+    borderWidth: 1,
+    borderColor: COLORS.gray[300],
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm + 2,
+    marginBottom: SPACING.md,
+  },
+  lockedInputText: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    color: COLORS.gray[600],
+    fontWeight: TYPOGRAPHY.weights.semibold,
   },
 });

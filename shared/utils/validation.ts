@@ -4,22 +4,23 @@ export interface ValidationResult {
 }
 
 export function validatePhoneNumber(phone: string): { isValid: boolean; error?: string; formatted?: string } {
-  const cleaned = phone.trim().replace(/[\s-]/g, '');
-  // Match 10 digit Indian number or +91 followed by 10 digits
-  const indian10Regex = /^[6-9]\d{9}$/;
-  const e164IndianRegex = /^\+91[6-9]\d{9}$/;
+  // Strip all non-digit characters except leading plus
+  const digitsOnly = phone.replace(/\D/g, '');
+  
+  // If +91 was prepended, digitsOnly is 12 characters starting with 91
+  let tenDigits = digitsOnly;
+  if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+    tenDigits = digitsOnly.substring(2);
+  }
 
-  if (indian10Regex.test(cleaned)) {
-    return { isValid: true, formatted: `+91${cleaned}` };
-  } else if (e164IndianRegex.test(cleaned)) {
-    return { isValid: true, formatted: cleaned };
-  } else if (/^\+\d{10,14}$/.test(cleaned)) {
-    return { isValid: true, formatted: cleaned };
+  // Strictly enforce exactly 10 digits starting with 6-9 (e.g. 9999999999, 9876543210)
+  if (tenDigits.length === 10 && /^[6-9]\d{9}$/.test(tenDigits)) {
+    return { isValid: true, formatted: `+91${tenDigits}` };
   }
 
   return {
     isValid: false,
-    error: 'Please enter a valid 10-digit mobile number (e.g. 9876543210)',
+    error: 'Please enter a valid 10-digit mobile number (e.g. 9999999999)',
   };
 }
 

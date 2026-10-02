@@ -114,8 +114,8 @@ export const ClientApp: React.FC = () => {
     );
   }
 
-  // 4. Client Profile Setup (if not configured)
-  if (!clientProfile) {
+  // 4. Client Profile Setup (Mandatory Gate if profile is incomplete)
+  if (!clientProfile || !clientProfile.isProfileComplete || !clientProfile.companyName) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <ClientProfileSetupScreen
@@ -133,8 +133,12 @@ export const ClientApp: React.FC = () => {
           client={clientProfile}
           onRefresh={() => setClientProfile({ ...ClientService.getCurrentClient() })}
           onLogout={() => {
+            ClientService.clearSession();
             setUser(null);
             setClientProfile(null);
+            setOtpSession(null);
+            setActiveTab('dashboard');
+            setStackScreen(null);
           }}
         />
       </SafeAreaView>
@@ -215,8 +219,12 @@ export const ClientApp: React.FC = () => {
           <ClientProfileScreen
             onNavigateToNotifications={() => setStackScreen({ name: 'notifications' })}
             onLogout={() => {
+              ClientService.clearSession();
               setUser(null);
               setClientProfile(null);
+              setOtpSession(null);
+              setActiveTab('dashboard');
+              setStackScreen(null);
             }}
           />
         );

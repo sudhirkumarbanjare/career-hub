@@ -5,6 +5,7 @@ export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED
 
 export interface Project {
   project_id: string;
+  id?: string;
   title: string;
   description: string;
   branch: string;
@@ -12,6 +13,8 @@ export interface Project {
   technologies: string[];
   difficulty: Difficulty;
   duration: string;
+  original_cost?: number;
+  discounted_cost?: number;
   cost: number;
   availability: Availability;
   capacity: number;

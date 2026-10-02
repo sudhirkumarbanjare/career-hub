@@ -14,6 +14,7 @@ import {
   Button,
   Input,
   AuthService,
+  AppLogo,
   APP_NAME,
 } from '@gotechplace/shared';
 
@@ -24,15 +25,20 @@ export interface ClientPhoneLoginScreenProps {
 export const ClientPhoneLoginScreen: React.FC<ClientPhoneLoginScreenProps> = ({
   onOtpRequested,
 }) => {
-  const [phone, setPhone] = useState('9812345678');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSendOtp = async () => {
+    const cleanDigits = phone.replace(/\D/g, '');
+    if (cleanDigits.length !== 10) {
+      setError('Please enter exactly 10-digit mobile number');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      const res = await AuthService.sendOtp(phone);
+      const res = await AuthService.sendOtp(cleanDigits);
       if (res.success && res.verificationId) {
         onOtpRequested(res.verificationId, res.formattedPhone);
       } else {
@@ -52,32 +58,30 @@ export const ClientPhoneLoginScreen: React.FC<ClientPhoneLoginScreenProps> = ({
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoText}>🏢</Text>
-          </View>
-          <Text style={styles.appName}>{APP_NAME}</Text>
-          <Text style={styles.portalTag}>CLIENT & EMPLOYER PORTAL</Text>
-          <Text style={styles.tagline}>
-            Hire skilled engineering students and sponsor innovative real-world projects.
-          </Text>
+          <AppLogo
+            portalLabel="Client & Employer Portal"
+            size="md"
+            subtitle="Hire skilled engineering students and sponsor innovative real-world projects."
+          />
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Client Phone Sign In</Text>
           <Text style={styles.cardSubtitle}>
-            Enter your mobile number to access your employer account.
+            Enter your 10-digit mobile number to access your employer account.
           </Text>
 
           <Input
-            label="Employer Phone Number"
-            placeholder="9812345678"
+            label="Employer Phone Number (10 Digits)"
+            placeholder="Enter 10-digit mobile number"
             value={phone}
             onChangeText={(text) => {
-              setPhone(text);
+              const digits = text.replace(/\D/g, '').slice(0, 10);
+              setPhone(digits);
               if (error) setError('');
             }}
             keyboardType="phone-pad"
-            maxLength={14}
+            maxLength={10}
             leftIcon={<Text style={styles.countryCode}>🇮🇳 +91</Text>}
             error={error}
           />

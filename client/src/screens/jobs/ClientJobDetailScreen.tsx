@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
+  TouchableOpacity,
 } from 'react-native';
 import {
   COLORS,
@@ -59,7 +60,7 @@ export const ClientJobDetailScreen: React.FC<ClientJobDetailScreenProps> = ({
     if (isApproved) return { label: 'LIVE & APPROVED', variant: 'success' };
     if (isPending) return { label: 'PENDING ADMIN APPROVAL', variant: 'warning' };
     if (isRejected) return { label: 'REJECTED / REVISION REQUIRED', variant: 'danger' };
-    return { label: job.status.toUpperCase(), variant: 'gray' };
+    return { label: (job.status || 'ACTIVE').toUpperCase(), variant: 'gray' };
   };
 
   const badge = getStatusBadge();
@@ -115,42 +116,58 @@ export const ClientJobDetailScreen: React.FC<ClientJobDetailScreenProps> = ({
 
         {isRejected ? (
           <View style={styles.rejectedBanner}>
-            <Text style={styles.rejectedTitle}>⚠️ Rejection Feedback</Text>
-            <Text style={styles.rejectedMsg}>{job.rejectionReason || 'Please modify the job requirements.'}</Text>
-            <Button
-              title="EDIT & RESUBMIT JOB"
+            <View style={styles.rejectedHeader}>
+              <Text style={{ fontSize: 20 }}>⚠️</Text>
+              <Text style={styles.rejectedTitle}>Revision Required by Admin</Text>
+            </View>
+            <Text style={styles.rejectedMsg}>{job.rejectionReason || 'Please modify the job requirements and budget.'}</Text>
+            <TouchableOpacity
+              style={styles.resubmitCtaBtn}
               onPress={() => setIsEditModalOpen(true)}
-              variant="danger"
-              size="sm"
-              style={{ marginTop: SPACING.sm }}
-            />
+              activeOpacity={0.85}
+            >
+              <Text style={styles.resubmitCtaText}>✎ EDIT & RESUBMIT POSTING NOW</Text>
+            </TouchableOpacity>
           </View>
         ) : null}
 
-        {/* Applicants Card */}
-        <Card style={styles.applicantCard}>
-          <View style={styles.applicantRow}>
-            <View>
-              <Text style={styles.applicantCount}>{job.applicationsCount || 0}</Text>
-              <Text style={styles.applicantLabel}>Candidate Applications</Text>
+        {/* High-Impact Applicants Hero CTA Card */}
+        <View style={styles.applicantHeroCard}>
+          <View style={styles.applicantTopRow}>
+            <View style={styles.applicantBadgeIcon}>
+              <Text style={{ fontSize: 22 }}>👥</Text>
             </View>
-            <Button
-              title="VIEW CANDIDATES →"
-              onPress={() => onViewApplications(job.id)}
-              size="sm"
-            />
+            <View style={{ flex: 1, marginLeft: SPACING.md }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.applicantHeroCount}>{job.applicationsCount || 0}</Text>
+                <Text style={styles.applicantHeroLabel}> Student Applications</Text>
+              </View>
+              <Text style={styles.applicantHeroSub}>
+                Verified engineering candidates ready for screening & interview.
+              </Text>
+            </View>
           </View>
-        </Card>
+
+          <TouchableOpacity
+            style={styles.viewCandidatesCtaBtn}
+            onPress={() => onViewApplications(job.id)}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.viewCandidatesCtaText}>
+              VIEW & SCREEN CANDIDATES ➔
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Description */}
         <Card style={styles.card}>
-          <Text style={styles.cardHeading}>Job Description</Text>
+          <Text style={styles.cardHeading}>Job Description & Deliverables</Text>
           <Text style={styles.descText}>{job.description}</Text>
         </Card>
 
         {/* Required Skills */}
         <Card style={styles.card}>
-          <Text style={styles.cardHeading}>Required Technologies</Text>
+          <Text style={styles.cardHeading}>Required Skills & Tech Stack</Text>
           <View style={styles.skillsGrid}>
             {job.skills.map((s) => (
               <Badge key={s} label={s} variant="brand" size="md" />
@@ -158,10 +175,11 @@ export const ClientJobDetailScreen: React.FC<ClientJobDetailScreenProps> = ({
           </View>
         </Card>
 
-        {/* Compensation */}
+        {/* Compensation & Timeline */}
         <Card style={styles.card}>
-          <Text style={styles.cardHeading}>Compensation</Text>
+          <Text style={styles.cardHeading}>Offered Stipend / Compensation</Text>
           <Text style={styles.budgetText}>{formatCurrency(job.budget)}</Text>
+          <Text style={styles.metaSub}>Milestone payouts verified through escrow.</Text>
         </Card>
       </ScrollView>
 
@@ -247,42 +265,109 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.base,
   },
   rejectedBanner: {
-    backgroundColor: COLORS.danger[50],
-    borderColor: COLORS.danger[200],
-    borderWidth: 1,
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
+    borderWidth: 1.5,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.base,
   },
+  rejectedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 6,
+  },
   rejectedTitle: {
     fontSize: TYPOGRAPHY.sizes.sm,
-    fontWeight: TYPOGRAPHY.weights.bold,
-    color: COLORS.danger[800],
+    fontWeight: '800',
+    color: '#9f1239',
   },
   rejectedMsg: {
     fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.danger[700],
+    color: '#be123c',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  resubmitCtaBtn: {
+    backgroundColor: '#e11d48',
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.sm,
+  },
+  resubmitCtaText: {
+    color: '#ffffff',
+    fontSize: TYPOGRAPHY.sizes.xs,
+    fontWeight: '800',
+  },
+  applicantHeroCard: {
+    backgroundColor: '#090d16',
+    borderRadius: RADIUS.xl,
+    padding: SPACING.base,
+    marginBottom: SPACING.base,
+    borderWidth: 1.5,
+    borderColor: '#1e3a8a',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  applicantTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  applicantBadgeIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1e293b',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+  },
+  applicantHeroCount: {
+    fontSize: TYPOGRAPHY.sizes['2xl'],
+    fontWeight: '800',
+    color: '#38bdf8',
+  },
+  applicantHeroLabel: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  applicantHeroSub: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    color: '#94a3b8',
     marginTop: 2,
   },
-  applicantCard: {
-    backgroundColor: COLORS.brand[50],
-    borderColor: COLORS.brand[200],
-    marginBottom: SPACING.base,
-  },
-  applicantRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  viewCandidatesCtaBtn: {
+    backgroundColor: '#2563eb',
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.sm + 4,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  applicantCount: {
-    fontSize: TYPOGRAPHY.sizes['2xl'],
-    fontWeight: TYPOGRAPHY.weights.bold,
-    color: COLORS.brand[900],
+  viewCandidatesCtaText: {
+    color: '#ffffff',
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
-  applicantLabel: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.brand[700],
-    fontWeight: TYPOGRAPHY.weights.medium,
+  metaSub: {
+    fontSize: 11,
+    color: COLORS.gray[500],
+    marginTop: 4,
   },
   card: {
     marginBottom: SPACING.base,

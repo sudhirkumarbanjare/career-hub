@@ -10,6 +10,28 @@ import {
 
 class ClientServiceManager {
   private currentClient: ClientProfile | null = null;
+  private clientsByUid: Map<string, ClientProfile> = new Map();
+
+  constructor() {
+    // Seed default demo verified client
+    const defaultClient: ClientProfile = {
+      uid: 'usr_client_demo',
+      clientId: 'CLI-2026-001',
+      companyName: 'Nexus Innovations Ltd',
+      contactPerson: 'Vikram Malhotra',
+      phoneNumber: '+91 98123 45678',
+      email: 'contact@nexusinnovations.tech',
+      website: 'https://nexusinnovations.tech',
+      location: 'Bangalore, Karnataka',
+      industry: 'Software & Cloud Engineering',
+      description: 'Leading provider of modern cloud architectures, embedded intelligence, and scalable mobile solutions.',
+      approvalStatus: 'approved',
+      isProfileComplete: true,
+      createdAt: '2026-01-20T11:00:00.000Z',
+      updatedAt: '2026-01-20T11:00:00.000Z',
+    };
+    this.clientsByUid.set(defaultClient.uid, defaultClient);
+  }
   private clientJobs: Job[] = [
     {
       id: 'job-c1',
@@ -131,26 +153,48 @@ class ClientServiceManager {
   ];
 
   initDefaultClient(user?: User): ClientProfile {
-    if (this.currentClient) return this.currentClient;
+    if (!user) {
+      if (!this.currentClient) {
+        this.currentClient = this.clientsByUid.get('usr_client_demo')!;
+      }
+      return this.currentClient;
+    }
 
-    const client: ClientProfile = {
-      uid: user?.uid || 'usr_client_demo',
-      clientId: 'CLI-2026-001',
-      companyName: 'Nexus Innovations Ltd',
-      contactPerson: user?.name || 'Vikram Malhotra',
-      phoneNumber: user?.phoneNumber || '+91 98123 45678',
-      email: 'contact@nexusinnovations.tech',
-      website: 'https://nexusinnovations.tech',
-      location: 'Bangalore, Karnataka',
-      industry: 'Software & Cloud Engineering',
-      description: 'Leading provider of modern cloud architectures, embedded intelligence, and scalable mobile solutions.',
-      approvalStatus: 'approved', // demo default
+    // Check if client profile already exists for this exact Firebase Auth UID
+    if (this.clientsByUid.has(user.uid)) {
+      this.currentClient = this.clientsByUid.get(user.uid)!;
+      return this.currentClient;
+    }
+
+    // Check if this is the default demo client UID or test phone
+    if (user.uid === 'usr_client_demo' || user.phoneNumber === '+91 98123 45678' || user.phoneNumber === '+919812345678') {
+      const demo = { ...this.clientsByUid.get('usr_client_demo')!, uid: user.uid, phoneNumber: user.phoneNumber };
+      this.clientsByUid.set(user.uid, demo);
+      this.currentClient = demo;
+      return demo;
+    }
+
+    // Brand new client: Bind strictly to verified Firebase phone number with incomplete profile
+    const newClient: ClientProfile = {
+      uid: user.uid,
+      clientId: `CLI-${Date.now().toString().slice(-6)}`,
+      companyName: '',
+      contactPerson: user.name || '',
+      phoneNumber: user.phoneNumber, // STRICT: ALWAYS verified phone number from Firebase Auth
+      email: user.email || '',
+      website: '',
+      location: '',
+      industry: '',
+      description: '',
+      approvalStatus: 'pending',
+      isProfileComplete: false, // Mandatory profile completion required
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    this.currentClient = client;
-    return client;
+    this.clientsByUid.set(user.uid, newClient);
+    this.currentClient = newClient;
+    return newClient;
   }
 
   getCurrentClient(): ClientProfile {
@@ -162,12 +206,49 @@ class ClientServiceManager {
 
   updateProfile(updates: Partial<ClientProfile>): ClientProfile {
     const current = this.getCurrentClient();
+
+    // SECURITY RULE: Strip immutable fields (phoneNumber, uid, clientId) to prevent modification
+    const { phoneNumber, uid, clientId, ...safeUpdates } = updates as any;
+
+    const isComplete = Boolean(
+      (safeUpdates.companyName || current.companyName) &&
+      (safeUpdates.contactPerson || current.contactPerson) &&
+      (safeUpdates.location || current.location) &&
+      (safeUpdates.industry || current.industry) &&
+      (safeUpdates.description || current.description)
+    );
+
     this.currentClient = {
       ...current,
-      ...updates,
+      ...safeUpdates,
+      phoneNumber: current.phoneNumber, // STRICT IMMUTABILITY: Retain verified phone number
+      uid: current.uid,
+      clientId: current.clientId,
+      approvalStatus: isComplete ? 'approved' : current.approvalStatus,
+      isProfileComplete: isComplete,
       updatedAt: new Date().toISOString(),
     };
+
+    // Ensure jobs are available for this client
+    if (isComplete) {
+      this.clientJobs.forEach((j) => {
+        if (j.clientId === 'usr_client_demo') {
+          j.clientId = this.currentClient!.uid;
+        }
+      });
+      this.applications.forEach((a) => {
+        if (a.clientId === 'usr_client_demo') {
+          a.clientId = this.currentClient!.uid;
+        }
+      });
+    }
+
+    this.clientsByUid.set(this.currentClient.uid, this.currentClient);
     return this.currentClient;
+  }
+
+  clearSession(): void {
+    this.currentClient = null;
   }
 
   // --- Jobs ---

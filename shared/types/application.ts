@@ -20,6 +20,7 @@ export interface JobApplication {
   skills: string[];
   resumeUrl?: string;
   coverNote?: string;
+  coverLetter?: string;
   status: ApplicationStatus;
   appliedAt: string;
   updatedAt: string;

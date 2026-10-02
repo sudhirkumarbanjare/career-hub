@@ -43,7 +43,7 @@ export const StudentApp: React.FC = () => {
 
   // 2. Authentication state
   const [user, setUser] = useState<User | null>(null);
-  const [isRegistered, setIsRegistered] = useState(true);
+  const [isRegistered, setIsRegistered] = useState(false);
   const [otpSession, setOtpSession] = useState<{ verificationId: string; phone: string } | null>(null);
 
   // 3. Navigation state
@@ -96,7 +96,8 @@ export const StudentApp: React.FC = () => {
             onChangePhone={() => setOtpSession(null)}
             onOtpVerified={(verifiedUser) => {
               setUser(verifiedUser);
-              StudentService.initDefaultStudent(verifiedUser);
+              const profile = StudentService.initDefaultStudent(verifiedUser);
+              setIsRegistered(Boolean(profile.isProfileComplete));
             }}
           />
         </SafeAreaView>
@@ -114,12 +115,14 @@ export const StudentApp: React.FC = () => {
     );
   }
 
-  // 4. Registration Onboarding (if new user profile incomplete)
+  // 4. Registration Onboarding (Mandatory Gate: if new student profile is incomplete)
   if (!isRegistered) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StudentRegistrationScreen
-          onComplete={() => setIsRegistered(true)}
+          onComplete={(profile) => {
+            setIsRegistered(true);
+          }}
         />
       </SafeAreaView>
     );
@@ -222,8 +225,12 @@ export const StudentApp: React.FC = () => {
           <StudentProfileScreen
             onNavigateToNotifications={() => setStackScreen({ name: 'notifications' })}
             onLogout={() => {
+              StudentService.clearSession();
               setUser(null);
               setOtpSession(null);
+              setIsRegistered(false);
+              setActiveTab('home');
+              setStackScreen(null);
             }}
           />
         );

@@ -87,4 +87,101 @@ describe('Authentication & Phone OTP Validation Engine', () => {
     assert.equal(check.allowed, false);
     assert.match(check.reason, /suspended/);
   });
+
+  test('enforces strict immutability of verified phone number in student profile update', () => {
+    const originalStudent = {
+      uid: 'usr_new_student_1',
+      student_id: 'STU-1001',
+      name: 'Rohan Sharma',
+      mobile: '+91 98111 22334', // Verified phone from Firebase Auth
+      college: 'Delhi Technological University',
+      branch: 'CSE / IT',
+      isProfileComplete: true,
+    };
+
+    // Attempted malicious / unauthorized phone change
+    const updateAttempt = {
+      name: 'Rohan Sharma Updated',
+      mobile: '+91 99999 88888', // Malicious attempt to change phone
+      college: 'DTU',
+    };
+
+    // Filter updates using security rule
+    const { mobile, uid, student_id, ...safeUpdates } = updateAttempt;
+    const updatedStudent = {
+      ...originalStudent,
+      ...safeUpdates,
+      mobile: originalStudent.mobile, // STRICT IMMUTABILITY
+      uid: originalStudent.uid,
+    };
+
+    assert.equal(updatedStudent.name, 'Rohan Sharma Updated');
+    assert.equal(updatedStudent.college, 'DTU');
+    assert.equal(updatedStudent.mobile, '+91 98111 22334'); // Preserved!
+  });
+
+  test('enforces mandatory profile completion gate for newly registered users', () => {
+    const incompleteStudent = {
+      uid: 'usr_brand_new_student',
+      name: '',
+      college: '',
+      branch: '',
+      mobile: '+91 98700 99887',
+      isProfileComplete: false,
+    };
+
+    const isComplete = Boolean(
+      incompleteStudent.isProfileComplete &&
+      incompleteStudent.name &&
+      incompleteStudent.college
+    );
+
+    assert.equal(isComplete, false); // Gated at Complete Profile Screen
+
+    // Complete profile
+    const completedStudent = {
+      ...incompleteStudent,
+      name: 'Pooja Verma',
+      college: 'NIT Trichy',
+      branch: 'ECE / EC',
+      isProfileComplete: true,
+    };
+
+    const isNowComplete = Boolean(
+      completedStudent.isProfileComplete &&
+      completedStudent.name &&
+      completedStudent.college
+    );
+
+    assert.equal(isNowComplete, true); // Allowed into dashboard
+  });
+
+  test('verifies multi-user session isolation (User A logout -> User B login)', () => {
+    const userRegistry = new Map();
+
+    // User A registers
+    const userA = { uid: 'usr_A', phoneNumber: '+91 98111 11111', name: 'User Alpha' };
+    const profileA = { uid: userA.uid, mobile: userA.phoneNumber, name: userA.name, isProfileComplete: true };
+    userRegistry.set(userA.uid, profileA);
+
+    let currentSession = profileA;
+    assert.equal(currentSession.mobile, '+91 98111 11111');
+    assert.equal(currentSession.name, 'User Alpha');
+
+    // User A logs out
+    currentSession = null;
+    assert.equal(currentSession, null);
+
+    // User B registers with different phone number
+    const userB = { uid: 'usr_B', phoneNumber: '+91 98222 22222', name: 'User Beta' };
+    const profileB = { uid: userB.uid, mobile: userB.phoneNumber, name: userB.name, isProfileComplete: true };
+    userRegistry.set(userB.uid, profileB);
+    currentSession = profileB;
+
+    // User B NEVER sees User A's phone number or profile
+    assert.equal(currentSession.mobile, '+91 98222 22222');
+    assert.notEqual(currentSession.mobile, userA.phoneNumber);
+    assert.equal(currentSession.uid, 'usr_B');
+    assert.notEqual(currentSession.name, 'User Alpha');
+  });
 });

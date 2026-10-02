@@ -191,13 +191,14 @@ export const AdminStaffScreen: React.FC<AdminStaffScreenProps> = ({
             placeholder="e.g. Priya Sundaram"
           />
 
-          <Text style={styles.fieldLabel}>Phone Number *</Text>
+          <Text style={styles.fieldLabel}>Phone Number (10 Digits) *</Text>
           <TextInput
             style={styles.input}
             value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            placeholder="+91 98765 00000"
+            onChangeText={(t) => setPhoneNumber(t.replace(/\D/g, '').slice(0, 10))}
+            placeholder="9999999999"
             keyboardType="phone-pad"
+            maxLength={10}
           />
 
           <Text style={styles.fieldLabel}>Official Email</Text>

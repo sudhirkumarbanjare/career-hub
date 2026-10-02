@@ -14,6 +14,7 @@ import {
   Button,
   Input,
   AuthService,
+  AppLogo,
   APP_NAME,
   APP_TAGLINE,
 } from '@gotechplace/shared';
@@ -23,15 +24,20 @@ export interface PhoneLoginScreenProps {
 }
 
 export const PhoneLoginScreen: React.FC<PhoneLoginScreenProps> = ({ onOtpRequested }) => {
-  const [phone, setPhone] = useState('9876543210');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSendOtp = async () => {
+    const cleanDigits = phone.replace(/\D/g, '');
+    if (cleanDigits.length !== 10) {
+      setError('Please enter exactly 10-digit mobile number');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      const res = await AuthService.sendOtp(phone);
+      const res = await AuthService.sendOtp(cleanDigits);
       if (res.success && res.verificationId) {
         onOtpRequested(res.verificationId, res.formattedPhone);
       } else {
@@ -51,30 +57,30 @@ export const PhoneLoginScreen: React.FC<PhoneLoginScreenProps> = ({ onOtpRequest
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoText}>🎓</Text>
-          </View>
-          <Text style={styles.appName}>{APP_NAME}</Text>
-          <Text style={styles.portalTag}>STUDENT PORTAL</Text>
-          <Text style={styles.tagline}>{APP_TAGLINE}</Text>
+          <AppLogo
+            portalLabel="Student Portal"
+            size="md"
+            subtitle="Empowering student projects, practical skills, and client career opportunities."
+          />
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Student Phone Sign In</Text>
           <Text style={styles.cardSubtitle}>
-            Enter your mobile number to receive a secure 6-digit verification code.
+            Enter your 10-digit mobile number to receive a secure 6-digit verification code.
           </Text>
 
           <Input
-            label="Mobile Number"
-            placeholder="9876543210"
+            label="Mobile Number (10 Digits)"
+            placeholder="Enter 10-digit mobile number"
             value={phone}
             onChangeText={(text) => {
-              setPhone(text);
+              const digits = text.replace(/\D/g, '').slice(0, 10);
+              setPhone(digits);
               if (error) setError('');
             }}
             keyboardType="phone-pad"
-            maxLength={14}
+            maxLength={10}
             leftIcon={<Text style={styles.countryCode}>🇮🇳 +91</Text>}
             error={error}
           />

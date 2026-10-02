@@ -51,16 +51,16 @@ class StudentServiceManager {
   ];
   private savedJobIds: Set<string> = new Set();
   private currentStudent: StudentProfile | null = null;
+  private profilesByUid: Map<string, StudentProfile> = new Map();
 
-  initDefaultStudent(user?: User): StudentProfile {
-    if (this.currentStudent) return this.currentStudent;
-
-    const student: StudentProfile = {
-      uid: user?.uid || 'usr_student_himanshu',
+  constructor() {
+    // Seed default verified demo student
+    const defaultStudent: StudentProfile = {
+      uid: 'usr_student_himanshu',
       student_id: 'STU-2026-001',
-      name: user?.name || 'Himanshu Sharma',
+      name: 'Himanshu Sharma',
       email: 'himanshu.student@example.edu',
-      mobile: user?.phoneNumber || '+91 98765 43210',
+      mobile: '+91 98765 43210',
       location: 'Bangalore, Karnataka',
       gender: 'Male',
       college: 'National Institute of Technology',
@@ -70,12 +70,59 @@ class StudentServiceManager {
       skills: ['React Native', 'TypeScript', 'Firebase', 'Python', 'YOLOv8'],
       bio: 'Enthusiastic engineering student specializing in mobile app architecture and applied computer vision systems.',
       savedJobs: [],
+      isProfileComplete: true,
+      createdAt: '2026-01-15T09:00:00.000Z',
+      updatedAt: '2026-01-15T09:00:00.000Z',
+    };
+    this.profilesByUid.set(defaultStudent.uid, defaultStudent);
+  }
+
+  initDefaultStudent(user?: User): StudentProfile {
+    if (!user) {
+      if (!this.currentStudent) {
+        this.currentStudent = this.profilesByUid.get('usr_student_himanshu')!;
+      }
+      return this.currentStudent;
+    }
+
+    // Check if profile already exists for this exact Firebase Auth UID
+    if (this.profilesByUid.has(user.uid)) {
+      this.currentStudent = this.profilesByUid.get(user.uid)!;
+      return this.currentStudent;
+    }
+
+    // Check if this is the default demo student UID or test phone
+    if (user.uid === 'usr_student_himanshu' || user.phoneNumber === '+91 98765 43210' || user.phoneNumber === '+919876543210') {
+      const demo = { ...this.profilesByUid.get('usr_student_himanshu')!, uid: user.uid, mobile: user.phoneNumber };
+      this.profilesByUid.set(user.uid, demo);
+      this.currentStudent = demo;
+      return demo;
+    }
+
+    // Brand new student: Bind strictly to verified Firebase phone number with incomplete profile
+    const newStudent: StudentProfile = {
+      uid: user.uid,
+      student_id: `STU-${Date.now().toString().slice(-6)}`,
+      name: user.name || '',
+      email: user.email || '',
+      mobile: user.phoneNumber, // STRICT: ALWAYS verified phone number from Firebase Auth
+      location: '',
+      gender: 'Prefer not to say',
+      college: '',
+      branch: '',
+      year: '',
+      semester: '',
+      skills: [],
+      bio: '',
+      savedJobs: [],
+      isProfileComplete: false, // Mandatory profile completion required
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    this.currentStudent = student;
-    return student;
+    this.profilesByUid.set(user.uid, newStudent);
+    this.currentStudent = newStudent;
+    return newStudent;
   }
 
   getCurrentStudent(): StudentProfile {
@@ -87,12 +134,33 @@ class StudentServiceManager {
 
   updateProfile(updates: Partial<StudentProfile>): StudentProfile {
     const current = this.getCurrentStudent();
+    
+    // SECURITY RULE: Strip immutable fields (mobile, uid, student_id) to prevent modification
+    const { mobile, uid, student_id, ...safeUpdates } = updates as any;
+
+    const isComplete = Boolean(
+      (safeUpdates.name || current.name) &&
+      (safeUpdates.college || current.college) &&
+      (safeUpdates.branch || current.branch)
+    );
+
     this.currentStudent = {
       ...current,
-      ...updates,
+      ...safeUpdates,
+      mobile: current.mobile, // STRICT IMMUTABILITY: Retain verified phone number
+      uid: current.uid,
+      student_id: current.student_id,
+      isProfileComplete: isComplete,
       updatedAt: new Date().toISOString(),
     };
+
+    this.profilesByUid.set(this.currentStudent.uid, this.currentStudent);
     return this.currentStudent;
+  }
+
+  clearSession(): void {
+    this.currentStudent = null;
+    this.savedJobIds.clear();
   }
 
   // --- Projects ---
@@ -149,6 +217,13 @@ class StudentServiceManager {
     return this.bookings.filter((b) => b.student_id === student.uid);
   }
 
+  isProjectBooked(projectId: string): boolean {
+    const student = this.getCurrentStudent();
+    return this.bookings.some(
+      (b) => b.student_id === student.uid && b.project_id === projectId && b.status !== 'CANCELLED'
+    );
+  }
+
   // --- Courses ---
   getCourses(filters?: { category?: string; search?: string }): Course[] {
     return this.courses.filter((c) => {
@@ -198,6 +273,13 @@ class StudentServiceManager {
   getMyEnrollments(): CourseEnrollment[] {
     const student = this.getCurrentStudent();
     return this.enrollments.filter((e) => e.student_id === student.uid);
+  }
+
+  isCourseEnrolled(courseId: string): boolean {
+    const student = this.getCurrentStudent();
+    return this.enrollments.some(
+      (e) => e.student_id === student.uid && e.course_id === courseId && e.status !== 'CANCELLED'
+    );
   }
 
   // --- Jobs (Approved Only) ---
@@ -265,9 +347,9 @@ class StudentServiceManager {
     const application: JobApplication = {
       id: `app_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       jobId,
-      jobTitle: job.title,
-      clientId: job.clientId,
-      companyName: job.clientName || 'GoTechPlace Client',
+      jobTitle: job.title || job.role || 'Software Engineer',
+      clientId: job.clientId || 'client_01',
+      companyName: job.company || job.clientName || 'GoTechPlace Client',
       studentId: student.uid,
       studentName: student.name,
       studentPhone: student.mobile,
@@ -291,6 +373,11 @@ class StudentServiceManager {
   getMyApplications(): JobApplication[] {
     const student = this.getCurrentStudent();
     return this.applications.filter((a) => a.studentId === student.uid);
+  }
+
+  hasAppliedToJob(jobId: string): boolean {
+    const student = this.getCurrentStudent();
+    return this.applications.some((a) => a.studentId === student.uid && a.jobId === jobId);
   }
 
   toggleBookmark(jobId: string): boolean {

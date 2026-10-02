@@ -13,3 +13,4 @@ export * from './ConfirmDialog';
 export * from './Tabs';
 export * from './Modal';
 export * from './Toast';
+export * from './AppLogo';

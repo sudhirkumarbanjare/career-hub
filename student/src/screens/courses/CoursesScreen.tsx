@@ -27,8 +27,14 @@ export interface CoursesScreenProps {
 export const CoursesScreen: React.FC<CoursesScreenProps> = ({ onSelectCourse }) => {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
-
-  const categories = ['All', 'Mobile Development', 'Hardware & IoT', 'AI & Machine Learning'];
+  const categories = [
+    'All',
+    'Data & Analytics',
+    'Software Engineering',
+    'Business & Office Productivity',
+    'Core Engineering',
+    'Enterprise Solutions',
+  ];
 
   const courses = useMemo(() => {
     return StudentService.getCourses({

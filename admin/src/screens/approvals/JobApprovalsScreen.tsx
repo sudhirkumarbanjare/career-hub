@@ -57,10 +57,10 @@ export const JobApprovalsScreen: React.FC<JobApprovalsScreenProps> = ({
         : j.approvalStatus === filter;
     const matchesSearch =
       searchQuery.trim() === '' ||
-      j.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (j.clientName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      j.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      j.skills.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
+      (j.title || j.role || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (j.clientName || j.company || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (j.category || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (j.skills || []).some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesFilter && matchesSearch;
   });
 
@@ -197,11 +197,11 @@ export const JobApprovalsScreen: React.FC<JobApprovalsScreenProps> = ({
                   <View style={{ flex: 1, paddingRight: SPACING.sm }}>
                     <Text style={styles.jobTitle}>{job.title}</Text>
                     <Text style={styles.clientSubtitle}>
-                      {job.clientName} • {job.category}
+                      {job.clientName || job.company || 'GoTechPlace'} • {job.category || 'Engineering'}
                     </Text>
                   </View>
                   <Badge
-                    text={job.approvalStatus.toUpperCase()}
+                    text={(job.approvalStatus || 'pending').toUpperCase()}
                     variant={isApproved ? 'success' : isPending ? 'warning' : 'danger'}
                   />
                 </View>

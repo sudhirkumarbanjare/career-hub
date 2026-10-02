@@ -214,13 +214,19 @@ export const CreateJobScreen: React.FC<CreateJobScreenProps> = ({
           </Text>
         </TouchableOpacity>
 
-        <Button
-          title="SUBMIT JOB FOR ADMIN REVIEW 🚀"
+        <TouchableOpacity
+          style={[styles.submitCtaBtn, submitting && { opacity: 0.7 }]}
           onPress={handleSubmit}
-          loading={submitting}
-          size="lg"
-          style={styles.submitBtn}
-        />
+          disabled={submitting}
+          activeOpacity={0.88}
+        >
+          <Text style={styles.submitCtaText}>
+            {submitting ? 'SUBMITTING...' : 'SUBMIT OPPORTUNITY FOR REVIEW 🚀'}
+          </Text>
+          <Text style={styles.submitCtaSubText}>
+            Instant admin dispatch • Live student marketplace exposure
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -328,7 +334,32 @@ const styles = StyleSheet.create({
     color: COLORS.brand[700],
     fontWeight: TYPOGRAPHY.weights.bold,
   },
-  submitBtn: {
+  submitCtaBtn: {
+    backgroundColor: '#2563eb',
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.base,
+    paddingHorizontal: SPACING.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
     marginTop: SPACING.xs,
+    borderWidth: 1,
+    borderColor: '#60a5fa',
+  },
+  submitCtaText: {
+    color: '#ffffff',
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  submitCtaSubText: {
+    color: '#bfdbfe',
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 3,
   },
 });

@@ -52,6 +52,7 @@ export interface StudentProfile {
   resumeUrl?: string;
   profileImage?: string;
   savedJobs?: string[];
+  isProfileComplete?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,6 +75,7 @@ export interface ClientProfile {
   approvedAt?: string;
   rejectedBy?: string;
   rejectedAt?: string;
+  isProfileComplete?: boolean;
   createdAt: string;
   updatedAt: string;
 }

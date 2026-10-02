@@ -114,50 +114,81 @@ export const ProjectsMarketplaceScreen: React.FC<ProjectsMarketplaceScreenProps>
             <Text style={styles.emptySubtitle}>Try changing your search terms or filters.</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <Card
-            style={styles.projectCard}
-            onPress={() => onSelectProject(item.project_id)}
-          >
-            <View style={styles.cardHeader}>
-              <Badge
-                label={item.project_type}
-                variant={item.project_type === 'Major' ? 'brand' : 'purple'}
-                size="sm"
-              />
-              <Badge label={item.difficulty} variant="gray" size="sm" />
-            </View>
+        renderItem={({ item }) => {
+          const originalPrice = item.original_cost || Math.round((item.cost || 6000) * 1.25);
+          const discountedPrice = item.discounted_cost || item.cost || 6000;
+          const isBooked = StudentService.isProjectBooked(item.project_id);
+          const techs = item.technologies || [];
 
-            <Text style={styles.projectTitle}>{item.title}</Text>
-            <Text style={styles.projectDesc} numberOfLines={2}>
-              {item.description}
-            </Text>
-
-            {/* Tech Stack Pills */}
-            <View style={styles.techStackRow}>
-              {item.technologies.slice(0, 4).map((tech) => (
-                <View key={tech} style={styles.techBadge}>
-                  <Text style={styles.techText}>{tech}</Text>
+          return (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => onSelectProject(item.project_id)}
+              style={styles.cardWrapper}
+            >
+              <Card style={styles.projectCard}>
+                {/* Limited Time Offer Ribbon */}
+                <View style={styles.offerBadge}>
+                  <View style={styles.offerDot} />
+                  <Text style={styles.offerText}>LIMITED TIME OFFER</Text>
                 </View>
-              ))}
-              {item.technologies.length > 4 ? (
-                <Text style={styles.moreTechText}>+{item.technologies.length - 4}</Text>
-              ) : null}
-            </View>
 
-            <View style={styles.cardFooter}>
-              <View>
-                <Text style={styles.costLabel}>Project Kit & Guidance</Text>
-                <Text style={styles.costValue}>{formatCurrency(item.cost)}</Text>
-              </View>
-              <Badge
-                label={item.availability}
-                variant={item.availability === 'Available' ? 'success' : 'warning'}
-                size="sm"
-              />
-            </View>
-          </Card>
-        )}
+                {/* Badges Bar */}
+                <View style={styles.cardHeader}>
+                  <Badge
+                    label={`${item.project_type || 'Minor'} Project`}
+                    variant={item.project_type === 'Major' ? 'brand' : 'purple'}
+                    size="sm"
+                  />
+                  <View style={styles.branchPill}>
+                    <Text style={styles.branchPillText}>{item.branch || 'General'}</Text>
+                  </View>
+                </View>
+
+                {/* Title & Excerpt */}
+                <Text style={styles.projectTitle} numberOfLines={1}>{item.title}</Text>
+                <Text style={styles.projectDesc} numberOfLines={2}>
+                  {item.description}
+                </Text>
+
+                {/* Tech Stack Chips */}
+                <View style={styles.techStackRow}>
+                  {techs.slice(0, 4).map((tech) => (
+                    <View key={tech} style={styles.techBadge}>
+                      <Text style={styles.techText}>{tech}</Text>
+                    </View>
+                  ))}
+                  {techs.length > 4 ? (
+                    <Text style={styles.moreTechText}>+{techs.length - 4}</Text>
+                  ) : null}
+                </View>
+
+                {/* Meta Row: Duration & Availability */}
+                <View style={styles.metaRow}>
+                  <Text style={styles.durationText}>🕒 {item.duration || '4–6 weeks'}</Text>
+                  <Text style={styles.availabilityText}>✓ {item.availability || 'Available'}</Text>
+                </View>
+
+                {/* Pricing & CTA */}
+                <View style={styles.cardFooter}>
+                  <View>
+                    <Text style={styles.costLabel}>ESTIMATED COST</Text>
+                    <View style={styles.priceRow}>
+                      <Text style={styles.originalPriceText}>{formatCurrency(originalPrice)}</Text>
+                      <Text style={styles.discountedPriceText}>{formatCurrency(discountedPrice)}</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={[styles.actionBtn, isBooked ? styles.actionBtnBooked : null]}>
+                    <Text style={[styles.actionBtnText, isBooked ? styles.actionBtnTextBooked : null]}>
+                      {isBooked ? 'Already Booked' : 'View Project →'}
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );
@@ -233,65 +264,160 @@ const styles = StyleSheet.create({
     padding: SPACING.base,
     paddingBottom: SPACING['4xl'],
   },
-  projectCard: {
+  cardWrapper: {
     marginBottom: SPACING.md,
+  },
+  projectCard: {
+    position: 'relative',
+    overflow: 'hidden',
+    paddingTop: SPACING.md + 4,
+  },
+  offerBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#059669',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderBottomLeftRadius: RADIUS.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    zIndex: 10,
+  },
+  offerDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#FFFFFF',
+  },
+  offerText: {
+    fontSize: 9,
+    fontWeight: TYPOGRAPHY.weights.extrabold,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: SPACING.xs,
+    alignItems: 'center',
+    marginBottom: SPACING.xs + 2,
+  },
+  branchPill: {
+    backgroundColor: COLORS.gray[100],
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: RADIUS.pill,
+  },
+  branchPillText: {
+    fontSize: 10,
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.gray[600],
   },
   projectTitle: {
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: TYPOGRAPHY.sizes.base,
     fontWeight: TYPOGRAPHY.weights.bold,
     color: COLORS.gray[900],
     marginBottom: 4,
   },
   projectDesc: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: TYPOGRAPHY.sizes.xs,
     color: COLORS.gray[600],
-    lineHeight: 18,
-    marginBottom: SPACING.sm,
+    lineHeight: 16,
+    marginBottom: SPACING.xs + 2,
   },
   techStackRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   techBadge: {
-    backgroundColor: COLORS.brand[50],
-    paddingHorizontal: 8,
+    backgroundColor: COLORS.gray[50],
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
+    paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   techText: {
     fontSize: 10,
-    color: COLORS.brand[700],
-    fontWeight: TYPOGRAPHY.weights.semibold,
+    color: COLORS.gray[700],
+    fontWeight: TYPOGRAPHY.weights.medium,
   },
   moreTechText: {
     fontSize: 10,
-    color: COLORS.gray[500],
+    color: COLORS.gray[400],
     alignSelf: 'center',
+    fontWeight: TYPOGRAPHY.weights.semibold,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gray[100],
+    marginBottom: 6,
+  },
+  durationText: {
+    fontSize: 11,
+    color: COLORS.gray[500],
+    fontWeight: TYPOGRAPHY.weights.medium,
+  },
+  availabilityText: {
+    fontSize: 11,
+    color: '#059669',
+    fontWeight: TYPOGRAPHY.weights.bold,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.gray[100],
-    paddingTop: SPACING.sm,
+    alignItems: 'center',
+    paddingTop: 4,
   },
   costLabel: {
-    fontSize: 10,
-    color: COLORS.gray[400],
-    textTransform: 'uppercase',
-  },
-  costValue: {
-    fontSize: TYPOGRAPHY.sizes.base,
+    fontSize: 9,
     fontWeight: TYPOGRAPHY.weights.bold,
-    color: COLORS.brand[700],
+    color: COLORS.gray[400],
+    letterSpacing: 0.5,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    marginTop: 1,
+  },
+  originalPriceText: {
+    fontSize: 12,
+    color: COLORS.gray[400],
+    textDecorationLine: 'line-through',
+    fontWeight: TYPOGRAPHY.weights.semibold,
+  },
+  discountedPriceText: {
+    fontSize: TYPOGRAPHY.sizes.base,
+    fontWeight: TYPOGRAPHY.weights.extrabold,
+    color: '#059669',
+  },
+  actionBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.brand[600],
+    backgroundColor: COLORS.surface,
+  },
+  actionBtnBooked: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  actionBtnText: {
+    fontSize: 11,
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.brand[600],
+  },
+  actionBtnTextBooked: {
+    color: '#047857',
   },
   emptyContainer: {
     padding: SPACING['3xl'],

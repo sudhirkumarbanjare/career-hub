@@ -14,6 +14,7 @@ import {
   Button,
   Input,
   AuthService,
+  AppLogo,
   APP_NAME,
 } from '@gotechplace/shared';
 
@@ -26,19 +27,24 @@ export const AdminPhoneLoginScreen: React.FC<AdminPhoneLoginScreenProps> = ({
   onOtpRequested,
   onContinue,
 }) => {
-  const [phone, setPhone] = useState('9999988888');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSendOtp = async () => {
+    const cleanDigits = phone.replace(/\D/g, '');
+    if (cleanDigits.length !== 10) {
+      setError('Please enter exactly 10-digit mobile number');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
       if (onContinue) {
-        onContinue(phone);
+        onContinue(cleanDigits);
         return;
       }
-      const res = await AuthService.sendOtp(phone);
+      const res = await AuthService.sendOtp(cleanDigits);
       if (res.success && res.verificationId) {
         onOtpRequested?.(res.verificationId, res.formattedPhone);
       } else {
@@ -58,32 +64,30 @@ export const AdminPhoneLoginScreen: React.FC<AdminPhoneLoginScreenProps> = ({
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoText}>🛡️</Text>
-          </View>
-          <Text style={styles.appName}>{APP_NAME}</Text>
-          <Text style={styles.portalTag}>PLATFORM MANAGEMENT CONSOLE</Text>
-          <Text style={styles.tagline}>
-            Restricted operations environment for authorized administrators, staff, and superusers.
-          </Text>
+          <AppLogo
+            portalLabel="Platform Management Console"
+            size="md"
+            subtitle="Restricted operations environment for authorized administrators, staff, and superusers."
+          />
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Administrator Access</Text>
           <Text style={styles.cardSubtitle}>
-            Enter your authorized administrative phone number to receive a secure access code.
+            Enter your authorized 10-digit phone number to receive a secure access code.
           </Text>
 
           <Input
-            label="Admin Phone Number"
-            placeholder="9999988888"
+            label="Admin Phone Number (10 Digits)"
+            placeholder="Enter 10-digit mobile number"
             value={phone}
             onChangeText={(t) => {
-              setPhone(t);
+              const digits = t.replace(/\D/g, '').slice(0, 10);
+              setPhone(digits);
               if (error) setError('');
             }}
             keyboardType="phone-pad"
-            maxLength={14}
+            maxLength={10}
             leftIcon={<Text style={styles.countryCode}>🇮🇳 +91</Text>}
             error={error}
           />

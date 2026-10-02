@@ -36,15 +36,20 @@ export const AdminOtpScreen: React.FC<AdminOtpScreenProps> = ({
   onChangePhone,
   onBack,
 }) => {
-  const [otp, setOtp] = useState('123456');
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleVerify = async () => {
+    const cleanOtp = otp.replace(/\D/g, '').slice(0, 6);
+    if (cleanOtp.length !== 6) {
+      setError('Please enter a valid 6-digit numeric OTP code');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      const res = await AuthService.verifyOtp(verificationId, otp, phoneNumber, 'superuser');
+      const res = await AuthService.verifyOtp(verificationId, cleanOtp, phoneNumber, 'superuser');
       if (res.success && res.user) {
         // Enforce RBAC access check on the client as well as server
         const accessCheck = AuthService.checkAccountAccess(res.user, 'admin');
@@ -78,10 +83,11 @@ export const AdminOtpScreen: React.FC<AdminOtpScreenProps> = ({
 
           <Input
             label="6-Digit Admin Passcode"
-            placeholder="123456"
+            placeholder="Enter 6-digit passcode"
             value={otp}
             onChangeText={(t) => {
-              setOtp(t);
+              const digits = t.replace(/\D/g, '').slice(0, 6);
+              setOtp(digits);
               if (error) setError('');
             }}
             keyboardType="number-pad"

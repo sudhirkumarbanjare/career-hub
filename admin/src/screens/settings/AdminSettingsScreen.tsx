@@ -221,12 +221,14 @@ export const AdminSettingsScreen: React.FC<AdminSettingsScreenProps> = ({
             autoCapitalize="none"
           />
 
-          <Text style={styles.fieldLabel}>Support Phone Hotline:</Text>
+          <Text style={styles.fieldLabel}>Support Phone Hotline (10 Digits):</Text>
           <TextInput
             style={styles.input}
             value={supportPhone}
-            onChangeText={setSupportPhone}
+            onChangeText={(t) => setSupportPhone(t.replace(/\D/g, '').slice(0, 10))}
+            placeholder="9999999999"
             keyboardType="phone-pad"
+            maxLength={10}
           />
 
           <View style={{ marginTop: SPACING.md }}>

@@ -6,6 +6,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Share,
 } from 'react-native';
 import {
   COLORS,
@@ -59,6 +60,18 @@ export const StudentProfileScreen: React.FC<StudentProfileScreenProps> = ({
     setStudent(updated);
     setSaving(false);
     setIsEditModalOpen(false);
+  };
+
+  const handleShareApp = async () => {
+    try {
+      await Share.share({
+        title: 'GoTechPlace Student Portal',
+        message:
+          '🎓 Join GoTechPlace — Book verified IEEE engineering projects, get certified, and apply for top client internships!\n\nExplore: https://gotechplace.com',
+      });
+    } catch (err: any) {
+      console.log('Share error:', err);
+    }
   };
 
   return (
@@ -142,6 +155,31 @@ export const StudentProfileScreen: React.FC<StudentProfileScreenProps> = ({
           </TouchableOpacity>
         ) : null}
 
+        {/* Share App Quick Access Card */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleShareApp}
+          style={styles.notifCardTouch}
+        >
+          <Card style={styles.shareMenuCard}>
+            <View style={styles.notifCardLeft}>
+              <View style={styles.shareIconCircle}>
+                <Text style={{ fontSize: 18 }}>📤</Text>
+              </View>
+              <View style={{ marginLeft: SPACING.sm, flex: 1 }}>
+                <Text style={styles.notifCardTitle}>Share GoTechPlace App</Text>
+                <Text style={styles.notifCardSub}>
+                  Invite classmates to build projects & apply for internships
+                </Text>
+              </View>
+            </View>
+            <View style={styles.notifCardRight}>
+              <Badge label="Share 🔗" variant="brand" size="sm" />
+              <Text style={styles.chevron}>→</Text>
+            </View>
+          </Card>
+        </TouchableOpacity>
+
         {/* Academic Details */}
         <Card style={styles.sectionCard}>
           <Text style={styles.sectionHeading}>Academic Information</Text>
@@ -192,6 +230,11 @@ export const StudentProfileScreen: React.FC<StudentProfileScreenProps> = ({
         onClose={() => setIsEditModalOpen(false)}
         title="Edit Student Profile"
       >
+        <Text style={styles.inputLabel}>Registered Mobile (Immutable)</Text>
+        <View style={styles.lockedInput}>
+          <Text style={styles.lockedInputText}>🔒 {student.mobile} (Verified)</Text>
+        </View>
+
         <Text style={styles.inputLabel}>Full Name</Text>
         <TextInput
           value={editName}
@@ -387,6 +430,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.brand[200] || '#bfdbfe',
   },
+  shareMenuCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  shareIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   notifCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -419,5 +481,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: COLORS.gray[400],
     marginLeft: 4,
+  },
+  lockedInput: {
+    backgroundColor: COLORS.gray[100],
+    borderWidth: 1,
+    borderColor: COLORS.gray[300],
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm + 2,
+    marginBottom: SPACING.md,
+  },
+  lockedInputText: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    color: COLORS.gray[600],
+    fontWeight: TYPOGRAPHY.weights.semibold,
   },
 });

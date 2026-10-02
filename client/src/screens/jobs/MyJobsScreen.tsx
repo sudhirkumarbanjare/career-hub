@@ -43,7 +43,7 @@ export const MyJobsScreen: React.FC<MyJobsScreenProps> = ({
     return allJobs;
   }, [allJobs, activeTab]);
 
-  const getStatusBadge = (status: string): { label: string; variant: BadgeVariant } => {
+  const getStatusBadge = (status?: string): { label: string; variant: BadgeVariant } => {
     switch (status) {
       case 'approved':
         return { label: 'APPROVED & LIVE', variant: 'success' };
@@ -52,7 +52,7 @@ export const MyJobsScreen: React.FC<MyJobsScreenProps> = ({
       case 'rejected':
         return { label: 'REJECTED', variant: 'danger' };
       default:
-        return { label: status.toUpperCase(), variant: 'gray' };
+        return { label: (status || 'UNKNOWN').toUpperCase(), variant: 'gray' };
     }
   };
 
@@ -63,8 +63,8 @@ export const MyJobsScreen: React.FC<MyJobsScreenProps> = ({
         subtitle={`${allJobs.length} listings total`}
         onBack={onBack}
         rightAction={
-          <TouchableOpacity onPress={onCreateJob} style={styles.headerActionBtn}>
-            <Text style={styles.headerActionText}>+ New</Text>
+          <TouchableOpacity onPress={onCreateJob} style={styles.headerActionBtn} activeOpacity={0.8}>
+            <Text style={styles.headerActionText}>+ Post Job 🚀</Text>
           </TouchableOpacity>
         }
       />
@@ -88,9 +88,22 @@ export const MyJobsScreen: React.FC<MyJobsScreenProps> = ({
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📂</Text>
-            <Text style={styles.emptyTitle}>No Job Postings</Text>
-            <Text style={styles.emptySub}>You haven't posted any jobs in this category yet.</Text>
+            <View style={styles.emptyIconCircle}>
+              <Text style={styles.emptyIcon}>📂</Text>
+            </View>
+            <Text style={styles.emptyTitle}>No Job Postings Found</Text>
+            <Text style={styles.emptySub}>
+              {activeTab === 'all'
+                ? "You haven't posted any job or capstone requirements yet. Post your opportunity to reach top engineering students."
+                : `No listings currently under "${activeTab.replace('_', ' ')}".`}
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyPostCtaBtn}
+              onPress={onCreateJob}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.emptyPostCtaText}>+ POST NEW JOB / PROJECT 🚀</Text>
+            </TouchableOpacity>
           </View>
         }
         renderItem={({ item }) => {
@@ -117,10 +130,21 @@ export const MyJobsScreen: React.FC<MyJobsScreenProps> = ({
               ) : null}
 
               <View style={styles.cardBottom}>
-                <Text style={styles.applicantCount}>
-                  👥 {item.applicationsCount || 0} Applicants
-                </Text>
-                <Text style={styles.manageLink}>View & Manage →</Text>
+                <View style={styles.applicantBadge}>
+                  <Text style={styles.applicantCount}>
+                    👥 {item.applicationsCount || 0} Candidates
+                  </Text>
+                </View>
+
+                <View style={styles.cardActionGroup}>
+                  <TouchableOpacity
+                    style={styles.managePill}
+                    onPress={() => onSelectJob(item.id)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.managePillText}>Review & Manage ➔</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </Card>
           );
@@ -136,15 +160,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   headerActionBtn: {
-    backgroundColor: COLORS.brand[50],
+    backgroundColor: '#2563eb',
     paddingHorizontal: SPACING.md,
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: RADIUS.md,
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   headerActionText: {
     fontSize: TYPOGRAPHY.sizes.xs,
-    fontWeight: TYPOGRAPHY.weights.bold,
-    color: COLORS.brand[700],
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: 0.3,
   },
   tabsContainer: {
     padding: SPACING.base,
@@ -158,6 +188,8 @@ const styles = StyleSheet.create({
   },
   jobCard: {
     marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
   },
   cardTop: {
     flexDirection: 'row',
@@ -202,34 +234,85 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: COLORS.gray[100],
-    paddingTop: SPACING.xs,
+    paddingTop: SPACING.sm,
+    marginTop: SPACING.xs,
+  },
+  applicantBadge: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: RADIUS.pill,
   },
   applicantCount: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.brand[700],
-    fontWeight: TYPOGRAPHY.weights.semibold,
+    fontSize: 11,
+    color: '#1d4ed8',
+    fontWeight: '700',
   },
-  manageLink: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.gray[500],
-  },
-  emptyContainer: {
-    padding: SPACING['3xl'],
+  cardActionGroup: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
+  managePill: {
+    backgroundColor: '#0f172a',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: RADIUS.md,
+  },
+  managePillText: {
+    fontSize: 11,
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  emptyContainer: {
+    padding: SPACING['2xl'],
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    marginTop: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
+  },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
   emptyIcon: {
-    fontSize: 44,
-    marginBottom: SPACING.sm,
+    fontSize: 32,
   },
   emptyTitle: {
     fontSize: TYPOGRAPHY.sizes.lg,
     fontWeight: TYPOGRAPHY.weights.bold,
-    color: COLORS.gray[800],
+    color: COLORS.gray[900],
+    marginBottom: 4,
   },
   emptySub: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.gray[500],
     textAlign: 'center',
-    marginTop: 4,
+    marginBottom: SPACING.xl,
+    lineHeight: 20,
+    maxWidth: 280,
+  },
+  emptyPostCtaBtn: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  emptyPostCtaText: {
+    color: '#ffffff',
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });

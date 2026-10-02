@@ -1,5 +1,6 @@
 import { User, UserRole, AccountStatus, DeviceToken } from '../types/user';
 import { validatePhoneNumber, validateOtp } from '../utils/validation';
+import { sendFirebasePhoneOtp, verifyFirebasePhoneOtp } from '../firebase/phoneAuth';
 
 export interface SendOtpResult {
   success: boolean;
@@ -17,26 +18,37 @@ export interface VerifyOtpResult {
 
 export const AuthService = {
   /**
-   * Request OTP for a phone number
+   * Request OTP for a phone number using Firebase Identity Toolkit
    */
-  async sendOtp(phone: string): Promise<SendOtpResult> {
+  async sendOtp(phone: string, recaptchaToken?: string): Promise<SendOtpResult> {
     const check = validatePhoneNumber(phone);
     if (!check.isValid || !check.formatted) {
       return {
         success: false,
         verificationId: '',
         formattedPhone: phone,
-        error: check.error || 'Invalid phone number format',
+        error: check.error || 'Invalid phone number format. Use 10-digit number or +91 format.',
       };
     }
 
     try {
-      // In production with Firebase Auth, this calls PhoneAuthProvider.verifyPhoneNumber
-      // Generates secure verification session ID
-      const verificationId = `ver_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const fbRes = await sendFirebasePhoneOtp({
+        phoneNumber: check.formatted,
+        recaptchaToken,
+      });
+
+      if (!fbRes.success || !fbRes.sessionInfo) {
+        return {
+          success: false,
+          verificationId: '',
+          formattedPhone: check.formatted,
+          error: fbRes.error || 'Failed to send OTP code via Firebase.',
+        };
+      }
+
       return {
         success: true,
-        verificationId,
+        verificationId: fbRes.sessionInfo,
         formattedPhone: check.formatted,
       };
     } catch (e: any) {
@@ -50,7 +62,7 @@ export const AuthService = {
   },
 
   /**
-   * Verify OTP and load/create user session
+   * Verify OTP and load/create user session with Firebase Auth
    */
   async verifyOtp(
     verificationId: string,
@@ -73,9 +85,20 @@ export const AuthService = {
     }
 
     try {
-      // Simulated deterministic UID from phone or Firebase Auth UserCredential
+      const fbVerify = await verifyFirebasePhoneOtp({
+        sessionInfo: verificationId,
+        code: otp,
+      });
+
+      if (!fbVerify.success || !fbVerify.uid) {
+        return {
+          success: false,
+          error: fbVerify.error || 'Invalid OTP code. Please try again.',
+        };
+      }
+
       const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
-      const uid = `usr_${cleanPhone.replace('+', '')}`;
+      const uid = fbVerify.uid;
 
       const now = new Date().toISOString();
       const user: User = {
@@ -93,7 +116,7 @@ export const AuthService = {
       return {
         success: true,
         user,
-        isNewUser: true,
+        isNewUser: fbVerify.isNewUser ?? true,
       };
     } catch (e: any) {
       return {
