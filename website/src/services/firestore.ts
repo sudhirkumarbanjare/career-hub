@@ -16,9 +16,6 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Student, Project, ProjectBooking, Job, Course, CourseEnrollment } from '../types';
-import { INITIAL_PROJECTS } from '../data/mockProjects';
-import { INITIAL_JOBS } from '../data/mockJobs';
-import { INITIAL_COURSES } from '../data/mockCourses';
 
 // ---------------------------------------------------------------------------
 // Helper: Convert Firestore Timestamp fields to ISO strings for our types
@@ -271,10 +268,10 @@ export const FirestoreService = {
         );
       }
 
-      return projects.length > 0 ? projects : INITIAL_PROJECTS;
+      return projects;
     } catch (err) {
       console.error('Firestore getProjects error:', err);
-      return INITIAL_PROJECTS;
+      return [];
     }
   },
 
@@ -530,10 +527,10 @@ export const FirestoreService = {
         );
       }
 
-      return jobs.length > 0 ? jobs : INITIAL_JOBS;
+      return jobs;
     } catch (err) {
       console.error('Firestore getJobs error:', err);
-      return INITIAL_JOBS;
+      return [];
     }
   },
 
@@ -671,10 +668,10 @@ export const FirestoreService = {
         );
       }
 
-      return courses.length > 0 ? courses : INITIAL_COURSES;
+      return courses;
     } catch (err) {
       console.error('Firestore getCourses error:', err);
-      return INITIAL_COURSES;
+      return [];
     }
   },
 

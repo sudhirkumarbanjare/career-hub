@@ -621,6 +621,9 @@ class AdminServiceManager {
       companyName: client.companyName,
     });
 
+    FirestoreClient.updateDocument('clients', client.uid, { approvalStatus: 'approved' });
+    FirestoreClient.updateDocument('users', client.uid, { isApproved: true, status: 'active' });
+
     this.logAction('APPROVE_CLIENT', 'client', client.uid, { companyName: client.companyName });
     return true;
   }
@@ -640,6 +643,8 @@ class AdminServiceManager {
       companyName: client.companyName,
       reason,
     });
+
+    FirestoreClient.updateDocument('clients', client.uid, { approvalStatus: 'rejected', rejectionReason: reason });
 
     this.logAction('REJECT_CLIENT', 'client', client.uid, { companyName: client.companyName, reason });
     return true;
@@ -683,6 +688,8 @@ class AdminServiceManager {
       }
     );
 
+    FirestoreClient.updateDocument('jobs', job.id, { approvalStatus: 'approved', status: 'approved' });
+
     this.logAction('APPROVE_JOB', 'job', job.id, { title: job.title });
     return true;
   }
@@ -705,6 +712,8 @@ class AdminServiceManager {
       reason,
     });
 
+    FirestoreClient.updateDocument('jobs', job.id, { approvalStatus: 'rejected', status: 'rejected', rejectionReason: reason });
+
     this.logAction('REJECT_JOB', 'job', job.id, { title: job.title, reason });
     return true;
   }
@@ -713,6 +722,7 @@ class AdminServiceManager {
     const idx = this.jobs.findIndex((j) => j.id === jobId);
     if (idx === -1) return false;
     const [deleted] = this.jobs.splice(idx, 1);
+    FirestoreClient.deleteDocument('jobs', jobId);
     this.logAction('DELETE_JOB', 'job', jobId, { title: deleted.title });
     return true;
   }
@@ -868,6 +878,7 @@ class AdminServiceManager {
     );
 
     this.campaigns.unshift(campaign);
+    FirestoreClient.setDocument('campaigns', campaign.id, campaign);
     this.logAction('SEND_NOTIFICATION', 'notification', campaign.id, { title, target, category });
     return campaign;
   }
@@ -1064,6 +1075,7 @@ class AdminServiceManager {
       updated_at: new Date().toISOString(),
     };
     this.projects.unshift(newProject);
+    FirestoreClient.setDocument('projects', newProject.project_id, newProject);
     this.logAction('CREATE_PROJECT', 'project', newProject.project_id, { title: newProject.title });
     return newProject;
   }
@@ -1076,6 +1088,7 @@ class AdminServiceManager {
       ...updates,
       updated_at: new Date().toISOString(),
     };
+    FirestoreClient.updateDocument('projects', projectId, updates);
     this.logAction('UPDATE_PROJECT', 'project', projectId, updates);
     return this.projects[idx];
   }
@@ -1084,6 +1097,7 @@ class AdminServiceManager {
     const prevLen = this.projects.length;
     this.projects = this.projects.filter((p) => p.project_id !== projectId);
     if (this.projects.length < prevLen) {
+      FirestoreClient.deleteDocument('projects', projectId);
       this.logAction('DELETE_PROJECT', 'project', projectId, {});
       return true;
     }
@@ -1095,6 +1109,7 @@ class AdminServiceManager {
     if (!p) return null;
     p.availability = p.availability === 'Available' ? 'Booked' : 'Available';
     p.updated_at = new Date().toISOString();
+    FirestoreClient.updateDocument('projects', projectId, { availability: p.availability });
     this.logAction('UPDATE_PROJECT', 'project', projectId, { availability: p.availability });
     return p;
   }

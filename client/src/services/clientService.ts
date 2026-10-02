@@ -286,6 +286,7 @@ class ClientServiceManager {
     };
 
     this.clientJobs.unshift(newJob);
+    FirestoreClient.setDocument('jobs', newJob.id, newJob);
 
     // Trigger automatic notification to Admin team
     NotificationService.generateAutomaticNotification('JOB_CREATED', {
@@ -313,6 +314,7 @@ class ClientServiceManager {
     }
 
     Object.assign(job, updates, { updatedAt: new Date().toISOString() });
+    FirestoreClient.updateDocument('jobs', id, updates);
     return { success: true, job };
   }
 
@@ -337,6 +339,8 @@ class ClientServiceManager {
     app.status = status;
     if (feedback) app.feedback = feedback;
     app.updatedAt = new Date().toISOString();
+
+    FirestoreClient.updateDocument('applications', applicationId, { status, feedback });
 
     // Trigger automatic push notification to student regarding status update
     NotificationService.generateAutomaticNotification('APPLICATION_STATUS_CHANGED', {

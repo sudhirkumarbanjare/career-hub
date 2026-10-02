@@ -105,24 +105,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu, isMobileMenu
                 Home
               </Link>
               <Link
-                to="/jobs"
-                className={`px-3.5 py-2 rounded-pill text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                  isActive('/jobs') ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <Briefcase className="w-4 h-4" />
-                Jobs
-              </Link>
-              <Link
-                to="/courses"
-                className={`px-3.5 py-2 rounded-pill text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                  isActive('/courses') ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <GraduationCap className="w-4 h-4" />
-                Courses
-              </Link>
-              <Link
                 to="/projects"
                 className={`px-3.5 py-2 rounded-pill text-sm font-medium transition-colors flex items-center gap-1.5 ${
                   isActive('/projects') ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -140,9 +122,19 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileMenu, isMobileMenu
                 <Briefcase className="w-4 h-4" />
                 Jobs
               </Link>
+              <Link
+                to="/courses"
+                className={`px-3.5 py-2 rounded-pill text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  isActive('/courses') ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <GraduationCap className="w-4 h-4" />
+                Courses
+              </Link>
             </>
           )}
         </nav>
+
 
         {/* Right Navigation & Profile Dropdown */}
         <div className="hidden md:flex items-center gap-3">

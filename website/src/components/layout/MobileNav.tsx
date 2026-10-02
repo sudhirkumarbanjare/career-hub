@@ -256,6 +256,27 @@ export const MobileNavDrawer: React.FC<MobileNavProps> = ({ isOpen, onClose }) =
                 </Link>
 
                 <Link
+                  to="/projects"
+                  onClick={onClose}
+                  className={`flex items-center justify-between p-3 rounded-xl transition-all ${
+                    isActive('/projects')
+                      ? 'bg-brand-600 text-white font-semibold shadow-xs'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Layers className="w-5 h-5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-bold leading-none">Academic Projects</p>
+                      <p className={`text-[10px] mt-1 ${isActive('/projects') ? 'text-brand-100' : 'text-gray-400'}`}>
+                        Hardware & software projects
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-70" />
+                </Link>
+
+                <Link
                   to="/jobs"
                   onClick={onClose}
                   className={`flex items-center justify-between p-3 rounded-xl transition-all ${
@@ -296,29 +317,9 @@ export const MobileNavDrawer: React.FC<MobileNavProps> = ({ isOpen, onClose }) =
                   </div>
                   <ChevronRight className="w-4 h-4 opacity-70" />
                 </Link>
-
-                <Link
-                  to="/projects"
-                  onClick={onClose}
-                  className={`flex items-center justify-between p-3 rounded-xl transition-all ${
-                    isActive('/projects')
-                      ? 'bg-brand-600 text-white font-semibold shadow-xs'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Layers className="w-5 h-5 shrink-0" />
-                    <div>
-                      <p className="text-xs font-bold leading-none">Academic Projects</p>
-                      <p className={`text-[10px] mt-1 ${isActive('/projects') ? 'text-brand-100' : 'text-gray-400'}`}>
-                        Hardware & software projects
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 opacity-70" />
-                </Link>
               </>
             )}
+
           </div>
         </div>
 
@@ -357,93 +358,3 @@ export const MobileNavDrawer: React.FC<MobileNavProps> = ({ isOpen, onClose }) =
   );
 };
 
-export const MobileBottomBar: React.FC = () => {
-  const { isAuthenticated, isRegistered } = useAuth();
-  const location = useLocation();
-
-  const isActive = (path: string) => location.pathname === path;
-
-  return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-gray-200 py-1.5 px-4 flex items-center justify-around shadow-lg">
-      {isAuthenticated && isRegistered ? (
-        <>
-          <Link
-            to="/dashboard"
-            className={`flex flex-col items-center gap-1 p-1 text-[10px] font-medium transition-colors ${
-              isActive('/dashboard') ? 'text-brand-600 font-bold' : 'text-gray-500'
-            }`}
-          >
-            <LayoutDashboard className="w-5 h-5" />
-            Dashboard
-          </Link>
-          <Link
-            to="/jobs"
-            className={`flex flex-col items-center gap-1 p-1 text-[10px] font-medium transition-colors ${
-              isActive('/jobs') ? 'text-brand-600 font-bold' : 'text-gray-500'
-            }`}
-          >
-            <Briefcase className="w-5 h-5" />
-            Jobs
-          </Link>
-          <Link
-            to="/projects"
-            className={`flex flex-col items-center gap-1 p-1 text-[10px] font-medium transition-colors ${
-              isActive('/projects') ? 'text-brand-600 font-bold' : 'text-gray-500'
-            }`}
-          >
-            <Layers className="w-5 h-5" />
-            Projects
-          </Link>
-          <Link
-            to="/profile"
-            className={`flex flex-col items-center gap-1 p-1 text-[10px] font-medium transition-colors ${
-              isActive('/profile') ? 'text-brand-600 font-bold' : 'text-gray-500'
-            }`}
-          >
-            <User className="w-5 h-5" />
-            Profile
-          </Link>
-        </>
-      ) : (
-        <>
-          <Link
-            to="/"
-            className={`flex flex-col items-center gap-1 p-1 text-[10px] font-medium transition-colors ${
-              isActive('/') ? 'text-brand-600 font-bold' : 'text-gray-500'
-            }`}
-          >
-            <Home className="w-5 h-5" />
-            Home
-          </Link>
-          <Link
-            to="/jobs"
-            className={`flex flex-col items-center gap-1 p-1 text-[10px] font-medium transition-colors ${
-              isActive('/jobs') ? 'text-brand-600 font-bold' : 'text-gray-500'
-            }`}
-          >
-            <Briefcase className="w-5 h-5" />
-            Jobs
-          </Link>
-          <Link
-            to="/projects"
-            className={`flex flex-col items-center gap-1 p-1 text-[10px] font-medium transition-colors ${
-              isActive('/projects') ? 'text-brand-600 font-bold' : 'text-gray-500'
-            }`}
-          >
-            <Layers className="w-5 h-5" />
-            Projects
-          </Link>
-          <Link
-            to="/login"
-            className={`flex flex-col items-center gap-1 p-1 text-[10px] font-medium transition-colors ${
-              isActive('/login') ? 'text-brand-600 font-bold' : 'text-gray-500'
-            }`}
-          >
-            <User className="w-5 h-5" />
-            Sign In
-          </Link>
-        </>
-      )}
-    </div>
-  );
-};

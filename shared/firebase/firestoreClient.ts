@@ -19,6 +19,25 @@ class UniversalFirestoreClient {
   private inMemoryCache: Map<string, any> = new Map();
   private listeners: Map<string, Set<RealtimeListener>> = new Map();
   private config = getFirebaseConfig();
+  private authToken: string | null = null;
+
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+  }
+
+  getAuthToken(): string | null {
+    return this.authToken;
+  }
+
+  private getHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`;
+    }
+    return headers;
+  }
 
   private getBaseUrl(): string {
     return `https://firestore.googleapis.com/v1/projects/${this.config.projectId}/databases/(default)/documents`;
@@ -113,7 +132,7 @@ class UniversalFirestoreClient {
     try {
       if (typeof fetch !== 'undefined') {
         const url = `${this.getBaseUrl()}/${collectionName}/${encodeURIComponent(docId)}`;
-        const resp = await fetch(url);
+        const resp = await fetch(url, { headers: this.getHeaders() });
         if (resp.ok) {
           const rawDoc = await resp.json();
           const docData = {
@@ -145,7 +164,7 @@ class UniversalFirestoreClient {
     try {
       if (typeof fetch !== 'undefined') {
         const url = `${this.getBaseUrl()}/${collectionName}?pageSize=100`;
-        const resp = await fetch(url);
+        const resp = await fetch(url, { headers: this.getHeaders() });
         if (resp.ok) {
           const raw = await resp.json();
           if (raw.documents && Array.isArray(raw.documents)) {
@@ -194,7 +213,7 @@ class UniversalFirestoreClient {
         const fields = this.toFirestoreFields(data as Record<string, any>);
         await fetch(url, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getHeaders(),
           body: JSON.stringify({ fields }),
         });
       }
@@ -227,7 +246,7 @@ class UniversalFirestoreClient {
         const fields = this.toFirestoreFields(updates as Record<string, any>);
         await fetch(url, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getHeaders(),
           body: JSON.stringify({ fields }),
         });
       }
@@ -250,7 +269,10 @@ class UniversalFirestoreClient {
     try {
       if (typeof fetch !== 'undefined') {
         const url = `${this.getBaseUrl()}/${collectionName}/${encodeURIComponent(docId)}`;
-        await fetch(url, { method: 'DELETE' });
+        await fetch(url, {
+          method: 'DELETE',
+          headers: this.getHeaders(),
+        });
       }
     } catch {
       // Offline fallback

@@ -231,6 +231,7 @@ class StudentServiceManager {
     };
 
     this.bookings.unshift(booking);
+    FirestoreClient.setDocument('bookings', booking.booking_id, booking);
 
     // Trigger automatic notification for project reservation
     NotificationService.generateAutomaticNotification('PROJECT_BOOKED', {
@@ -295,6 +296,7 @@ class StudentServiceManager {
     };
 
     this.enrollments.unshift(enrollment);
+    FirestoreClient.setDocument('enrollments', enrollment.enrollment_id, enrollment);
 
     // Trigger automatic notification for course enrollment
     NotificationService.generateAutomaticNotification('COURSE_ENROLLED', {
@@ -400,6 +402,8 @@ class StudentServiceManager {
 
     this.applications.unshift(application);
     job.applicationsCount = (job.applicationsCount || 0) + 1;
+    FirestoreClient.setDocument('applications', application.id, application);
+    FirestoreClient.updateDocument('jobs', jobId, { applicationsCount: job.applicationsCount });
 
     return { success: true, application };
   }

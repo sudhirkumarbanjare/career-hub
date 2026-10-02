@@ -62,4 +62,49 @@ test('Universal Firestore Client - Data Layer & Real-Time Sync', async (t) => {
     const fetched = await FirestoreClient.getDocument('test_items', 'item_4');
     assert.strictEqual(fetched, null);
   });
+
+  await t.test('6. Auth Token management for REST API requests', async () => {
+    FirestoreClient.setAuthToken('sample_firebase_jwt_token_123');
+    assert.strictEqual(FirestoreClient.getAuthToken(), 'sample_firebase_jwt_token_123');
+    FirestoreClient.setAuthToken(null);
+    assert.strictEqual(FirestoreClient.getAuthToken(), null);
+  });
+
+  await t.test('7. Multi-app real-time event pipeline (Client -> Admin -> Student)', async () => {
+    let studentReceivedJobs = [];
+    let adminReceivedJobs = [];
+
+    const unsubscribeStudent = FirestoreClient.subscribe('jobs', (jobs) => {
+      studentReceivedJobs = jobs.filter((j) => j.status === 'approved' || j.status === 'published');
+    });
+
+    const unsubscribeAdmin = FirestoreClient.subscribe('jobs', (jobs) => {
+      adminReceivedJobs = jobs;
+    });
+
+    // Step 1: Client posts job
+    await FirestoreClient.setDocument('jobs', 'job_flow_01', {
+      title: 'Senior Cloud Engineer',
+      clientUid: 'client_101',
+      status: 'pending',
+      salary: '₹18,00,000',
+    });
+
+    // Admin sees pending job, student does not
+    assert.ok(adminReceivedJobs.some((j) => j.id === 'job_flow_01'));
+    assert.strictEqual(studentReceivedJobs.some((j) => j.id === 'job_flow_01'), false);
+
+    // Step 2: Admin approves job
+    await FirestoreClient.updateDocument('jobs', 'job_flow_01', {
+      status: 'approved',
+      approvedBy: 'admin_superuser_01',
+    });
+
+    // Now student automatically sees it in real-time
+    assert.ok(studentReceivedJobs.some((j) => j.id === 'job_flow_01' && j.status === 'approved'));
+
+    unsubscribeStudent();
+    unsubscribeAdmin();
+  });
 });
+
