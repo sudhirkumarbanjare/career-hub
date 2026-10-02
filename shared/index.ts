@@ -6,4 +6,5 @@ export * from './services';
 export * from './components';
 export * from './firebase/config';
 export * from './firebase/phoneAuth';
+export * from './firebase/firestoreClient';
 export * from './data';

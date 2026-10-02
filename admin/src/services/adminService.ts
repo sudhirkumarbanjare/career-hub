@@ -30,6 +30,7 @@ import {
   NotificationTemplateStatus,
   TemplateRenderResult,
   DeletionResult,
+  FirestoreClient,
 } from '@gotechplace/shared';
 
 class AdminServiceManager {
@@ -79,6 +80,16 @@ class AdminServiceManager {
       isApproved: true,
       createdAt: '2026-01-15T09:00:00.000Z',
       updatedAt: '2026-01-15T09:00:00.000Z',
+    },
+    {
+      uid: 'usr_9999999999',
+      phoneNumber: '+91 99999 99999',
+      name: 'Himanshu Sharma (Verified Student)',
+      role: 'student',
+      status: 'active',
+      isApproved: true,
+      createdAt: '2026-01-16T09:00:00.000Z',
+      updatedAt: '2026-01-16T09:00:00.000Z',
     },
     {
       uid: 'usr_client_demo',
@@ -419,6 +430,15 @@ class AdminServiceManager {
     });
   }
 
+  // Constructor to seed Firestore Client cache
+  constructor() {
+    FirestoreClient.seedCache('users', this.users);
+    FirestoreClient.seedCache('clients', this.clients);
+    FirestoreClient.seedCache('jobs', this.jobs);
+    FirestoreClient.seedCache('projects', this.projects);
+    FirestoreClient.seedCache('campaigns', this.campaigns);
+  }
+
   // --- Auth & Admin Session ---
   getCurrentAdmin(): User {
     return this.currentAdmin;
@@ -471,19 +491,44 @@ class AdminServiceManager {
       list = list.filter((u) => u.status === filters.status);
     }
     if (filters?.search) {
-      const q = filters.search.toLowerCase();
-      list = list.filter(
-        (u) =>
-          u.name.toLowerCase().includes(q) ||
-          u.phoneNumber.includes(q) ||
-          u.uid.toLowerCase().includes(q)
-      );
+      const q = filters.search.trim().toLowerCase();
+      const qDigits = q.replace(/\D/g, '');
+      list = list.filter((u) => {
+        const nameMatch = u.name.toLowerCase().includes(q);
+        const uidMatch = u.uid.toLowerCase().includes(q);
+        const phoneRawMatch = u.phoneNumber.toLowerCase().includes(q);
+        const phoneDigits = u.phoneNumber.replace(/\D/g, '');
+        const phoneDigitMatch = qDigits.length >= 3 && phoneDigits.includes(qDigits);
+        return nameMatch || uidMatch || phoneRawMatch || phoneDigitMatch;
+      });
     }
     return list;
   }
 
   getUserById(uid: string): User | undefined {
     return this.users.find((u) => u.uid === uid);
+  }
+
+  registerOrUpdateUser(user: Partial<User> & { uid: string; phoneNumber?: string }): User {
+    const existing = this.getUserById(user.uid);
+    const now = new Date().toISOString();
+    if (existing) {
+      Object.assign(existing, user, { updatedAt: now });
+      return existing;
+    }
+    const newUser: User = {
+      uid: user.uid,
+      phoneNumber: user.phoneNumber || '+91 99999 99999',
+      name: user.name || 'User Account',
+      role: user.role || 'student',
+      status: user.status || 'active',
+      isApproved: user.isApproved ?? true,
+      email: user.email,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.users.unshift(newUser);
+    return newUser;
   }
 
   setUserStatus(uid: string, status: 'active' | 'suspended'): boolean {

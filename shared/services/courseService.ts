@@ -1,5 +1,6 @@
 import { Course, CourseEnrollment, EnrollmentStatus } from '../types/course';
 import { INITIAL_COURSES } from '../data/mockCourses';
+import { FirestoreClient } from '../firebase/firestoreClient';
 
 let coursesStore: Course[] = [...INITIAL_COURSES];
 let enrollmentsStore: CourseEnrollment[] = [
@@ -13,6 +14,10 @@ let enrollmentsStore: CourseEnrollment[] = [
     course: INITIAL_COURSES[0],
   },
 ];
+
+// Seed Firestore Client Cache
+FirestoreClient.seedCache('courses', coursesStore);
+FirestoreClient.seedCache('enrollments', enrollmentsStore);
 
 export const CourseService = {
   /** Get all courses matching website catalog */

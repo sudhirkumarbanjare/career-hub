@@ -2,28 +2,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function isAdmin() {
-      return request.auth != null && (
+      return isSignedIn() && (
         request.auth.token.email == 'gotechplace@gmail.com' ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superuser', 'moderator']
       );
     }
 
-    // 1. Users can only read and write their own profile data, but admin can read and update all
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // 1. Users collection: Self read/write, Admin full access
     match /users/{uid} {
-      allow read: if (request.auth != null && request.auth.uid == uid) || isAdmin();
-      allow write: if (request.auth != null && request.auth.uid == uid) || isAdmin();
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isOwner(uid) || isAdmin();
       
-      // Users can only access their own bookings and enrollments
+      // Subcollections: Bookings & Enrollments
       match /bookings/{bookingId} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read, write: if isOwner(uid) || isAdmin();
       }
       match /enrollments/{enrollmentId} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read, write: if isOwner(uid) || isAdmin();
       }
     }
 
-    // Allow admins to read collection groups
+    // Allow admins to read all collection groups
     match /{path=**}/bookings/{bookingId} {
       allow read: if isAdmin();
     }
@@ -31,20 +39,45 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // 2. Catalogs are PUBLIC to read (anyone can view projects/jobs/courses)
+    // 2. Catalogs: Projects & Courses (Public read, Admin manage)
     match /projects/{projectId} {
       allow read: if true;
       allow write: if isAdmin(); 
     }
 
-    match /jobs/{jobId} {
+    match /courses/{courseId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    match /courses/{courseId} {
+    // 3. Jobs: Public read for approved jobs, Clients can create/edit their own, Admins moderate
+    match /jobs/{jobId} {
+      allow read: if resource.data.approvalStatus == 'approved' || (isSignedIn() && resource.data.clientId == request.auth.uid) || isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if (isSignedIn() && resource.data.clientId == request.auth.uid && resource.data.approvalStatus != 'approved') || isAdmin();
+    }
+
+    // 4. Applications: Students can submit & read theirs, Clients read applicants for their jobs, Admin full access
+    match /applications/{applicationId} {
+      allow read: if (isSignedIn() && (resource.data.studentId == request.auth.uid || resource.data.clientId == request.auth.uid)) || isAdmin();
+      allow create: if isSignedIn();
+      allow update: if (isSignedIn() && resource.data.clientId == request.auth.uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 5. Campaigns & App Versions: Public/client read, Admin write
+    match /campaigns/{campaignId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /app_versions/{appId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      allow read, write: if isAdmin();
     }
   }
 }

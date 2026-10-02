@@ -7,6 +7,7 @@ import {
   User,
   JobStatus,
   ApprovalStatus,
+  FirestoreClient,
 } from '@gotechplace/shared';
 
 class ClientServiceManager {
@@ -32,6 +33,9 @@ class ClientServiceManager {
       updatedAt: '2026-01-20T11:00:00.000Z',
     };
     this.clientsByUid.set(defaultClient.uid, defaultClient);
+
+    // Seed Firestore Client Cache
+    FirestoreClient.seedCache('clients', [defaultClient]);
   }
   private clientJobs: Job[] = [
     {

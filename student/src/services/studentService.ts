@@ -9,6 +9,7 @@ import {
   AppNotification,
   NotificationService,
   User,
+  FirestoreClient,
 } from '@gotechplace/shared';
 import {
   INITIAL_PROJECTS,
@@ -76,6 +77,11 @@ class StudentServiceManager {
       updatedAt: '2026-01-15T09:00:00.000Z',
     };
     this.profilesByUid.set(defaultStudent.uid, defaultStudent);
+
+    // Seed Firestore Client Cache
+    FirestoreClient.seedCache('projects', this.projects);
+    FirestoreClient.seedCache('courses', this.courses);
+    FirestoreClient.seedCache('jobs', this.jobs);
   }
 
   initDefaultStudent(user?: User): StudentProfile {
@@ -93,8 +99,22 @@ class StudentServiceManager {
     }
 
     // Check if this is the default demo student UID or test phone
-    if (user.uid === 'usr_student_himanshu' || user.phoneNumber === '+91 98765 43210' || user.phoneNumber === '+919876543210') {
-      const demo = { ...this.profilesByUid.get('usr_student_himanshu')!, uid: user.uid, mobile: user.phoneNumber };
+    if (
+      user.uid === 'usr_student_himanshu' ||
+      user.uid === 'usr_9999999999' ||
+      user.phoneNumber === '+91 98765 43210' ||
+      user.phoneNumber === '+919876543210' ||
+      user.phoneNumber === '+91 99999 99999' ||
+      user.phoneNumber === '+919999999999' ||
+      user.phoneNumber.replace(/\D/g, '').endsWith('9999999999')
+    ) {
+      const demo = {
+        ...this.profilesByUid.get('usr_student_himanshu')!,
+        uid: user.uid,
+        mobile: user.phoneNumber,
+        student_id: 'STU-2026-001',
+        isProfileComplete: true,
+      };
       this.profilesByUid.set(user.uid, demo);
       this.currentStudent = demo;
       return demo;

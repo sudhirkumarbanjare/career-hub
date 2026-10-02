@@ -1,6 +1,7 @@
 import { Job, JobType, ApprovalStatus } from '../types/job';
 import { JobApplication } from '../types/application';
 import { INITIAL_JOBS } from '../data/mockJobs';
+import { FirestoreClient } from '../firebase/firestoreClient';
 
 let jobsStore: Job[] = INITIAL_JOBS.map((j) => ({
   ...j,
@@ -35,6 +36,10 @@ let applicationsStore: JobApplication[] = [
     updatedAt: new Date().toISOString(),
   },
 ];
+
+// Seed Firestore Client Cache
+FirestoreClient.seedCache('jobs', jobsStore);
+FirestoreClient.seedCache('applications', applicationsStore);
 
 export const JobService = {
   /** Get all approved active jobs matching website catalog */

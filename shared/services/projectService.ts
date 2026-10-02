@@ -1,5 +1,6 @@
 import { Project, ProjectBooking, BookingStatus } from '../types/project';
 import { INITIAL_PROJECTS } from '../data/mockProjects';
+import { FirestoreClient } from '../firebase/firestoreClient';
 
 let projectsStore: Project[] = [...INITIAL_PROJECTS];
 let bookingsStore: ProjectBooking[] = [
@@ -13,6 +14,10 @@ let bookingsStore: ProjectBooking[] = [
     project: INITIAL_PROJECTS[0],
   },
 ];
+
+// Seed Firestore Client Cache
+FirestoreClient.seedCache('projects', projectsStore);
+FirestoreClient.seedCache('bookings', bookingsStore);
 
 export const ProjectService = {
   /** Get all available projects matching website catalog */
